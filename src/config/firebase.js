@@ -3,15 +3,16 @@ import { getFirestore } from 'firebase/firestore';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-// Firebase configuration
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBqDCZidQSSGzhZu0hS1bZtxD4pJLYvIgY", // คุณจะต้องใส่ apiKey และ appId จาก Firebase Console
-  authDomain: "tracking-fish-app.firebaseapp.com",
-  projectId: "tracking-fish-app",
-  storageBucket: "tracking-fish-app.firebasestorage.app",
-  messagingSenderId: "587580376587",
-  appId: "1:587580376587:web:a35c9caf6acab6a110290e" // คุณจะต้องใส่ appId จาก Firebase Console
+  apiKey: Constants.expoConfig?.extra?.firebaseApiKey,
+  authDomain: Constants.expoConfig?.extra?.firebaseAuthDomain,
+  projectId: Constants.expoConfig?.extra?.firebaseProjectId,
+  storageBucket: Constants.expoConfig?.extra?.firebaseStorageBucket,
+  messagingSenderId: Constants.expoConfig?.extra?.firebaseMessagingSenderId,
+  appId: Constants.expoConfig?.extra?.firebaseAppId
 };
 
 // Initialize Firebase

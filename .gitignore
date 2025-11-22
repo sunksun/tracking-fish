@@ -43,8 +43,11 @@ yarn-error.*
 # Firebase and sensitive files
 google-services.json
 GoogleService-Info.plist
+
+# Environment variables - NEVER commit these!
 .env
 .env.local
+.env*.local
 
 # Debug and utility scripts - These contain Firebase credentials!
 check-firestore-data.js
