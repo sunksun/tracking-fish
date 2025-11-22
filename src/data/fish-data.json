@@ -1,0 +1,1005 @@
+{
+  "meta_data": {
+    "document_title": "สรุปหนังสือคู่มือคีย์ปลาน้ำโขง",
+    "section": "ส่วนที่ 4: ลักษณะจำแนกชนิด (Species Identification)",
+    "page_range": "1-116",
+    "total_families_covered": 61
+  },
+  "species_database": [
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Dasyatidae",
+      "scientific_name": "Urogymnus polylepis",
+      "thai_name": "ราหูน้ำจืด",
+      "local_name": "ฝาไลใหญ่",
+      "iucn_status": "EN",
+      "key_characteristics": [
+        "ส่วนหน้าของครีบอก: คลุมหัวและลำตัวมีปลายแหลม",
+        "ส่วนท้องของครีบอก: มีขอบสีดำ"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Dasyatidae",
+      "scientific_name": "Hemitrygon laosensis",
+      "thai_name": "กระเบนแม่น้ำโขง",
+      "local_name": "ฝาไลลาว",
+      "iucn_status": "EN",
+      "key_characteristics": [
+        "จะงอยปาก: เป็นรูปสามเหลี่ยม",
+        "หาง: ส่วนท้องมีสันครีบขนาดเล็กในแนวกลาง"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Lepisosteidae",
+      "scientific_name": "Atractosteus spatula",
+      "thai_name": "จระเข้, การ์",
+      "local_name": null,
+      "iucn_status": "Alien (North America)",
+      "key_characteristics": [
+        "ลำตัว: ทรงกระบอกมีเกล็ดหนา",
+        "ปาก: ขากรรไกรบนและล่างยาว มีฟันลักษณะคล้ายเข็ม"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Anguillidae",
+      "scientific_name": "Anguilla marmorata",
+      "thai_name": "ไหลยักษ์",
+      "local_name": "เอี่ยนหู",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ลำตัว: มีลายกระ",
+        "ขากรรไกร: ขากรรไกรล่างยื่นยาวกว่าขากรรไกรบน"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Osteoglossidae",
+      "scientific_name": "Arapaima gigas",
+      "thai_name": "ช่อนอเมซอน",
+      "local_name": null,
+      "iucn_status": "Alien (South America)",
+      "key_characteristics": [
+        "หัว: มีกระดูกแข็งหนา",
+        "ครีบ: ครีบหลังและครีบก้นอยู่บริเวณส่วนท้ายของลำตัว"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Notopteridae",
+      "scientific_name": "Chitala blanci",
+      "thai_name": "ตองลาย",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": [
+        "หัว: มีลักษณะเว้า",
+        "สีสัน: แต้มกลมสีดำบริเวณฐานครีบอก"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Notopteridae",
+      "scientific_name": "Chitala lopis",
+      "thai_name": "สะตือ",
+      "local_name": "ตองแหล่ใหญ่",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "สีสัน: ปลาโตเต็มวัยมีสีเงิน",
+        "หัว: มีลักษณะเว้า"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Notopteridae",
+      "scientific_name": "Chitala ornata",
+      "thai_name": "กราย",
+      "local_name": "ตองดาว",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "สีสัน: แต้มกลมรูปวงแหวน (และลายเฉียงหนาในลูกปลา)",
+        "ฐานครีบอก: ไม่มีแต้มกลมสีดำบริเวณฐานครีบอก"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Notopteridae",
+      "scientific_name": "Notopterus notopterus",
+      "thai_name": "สลาด",
+      "local_name": "ตอง",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "หัว: มีลักษณะลาดตรง",
+        "สีสัน: ลำตัวมีสีเงิน ไม่มีแต้มกลมสีดำบริเวณฐานครีบอก"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Engraulidae",
+      "scientific_name": "Setipinna melanochir",
+      "thai_name": "แมวหูดำ",
+      "local_name": "แมว",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบอก: มีสีดำ",
+        "เกล็ด: เกล็ดซี่จักรในแนวสันท้อง 30-35 เกล็ด"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Clupeidae",
+      "scientific_name": "Clupeichthys aesarnensis",
+      "thai_name": "ซิวแก้วอีสาน",
+      "local_name": "แก้ว",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบหลัง/ครีบท้อง: มีจุดเริ่มต้นในแนวเดียวกัน",
+        "เกล็ดซี่จักร: หน้าครีบท้อง 8-10 เกล็ด"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Clupeidae",
+      "scientific_name": "Clupeichthys goniognathus",
+      "thai_name": "ซิวแก้วหัวแหลม",
+      "local_name": "แก้วหัวแหลม",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบหลัง/ครีบท้อง: ครีบหลังมีจุดเริ่มต้นอยู่หน้าครีบท้อง"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Clupeidae",
+      "scientific_name": "Tenualosa thibaudeaui",
+      "thai_name": "หมากผาง",
+      "local_name": null,
+      "iucn_status": "VU",
+      "key_characteristics": ["สีสัน: ปลาโตเต็มวัยมีแถวของแต้มสีดำบนลำตัว"]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Clupeidae",
+      "scientific_name": "Sundasalanx mekongensis",
+      "thai_name": "ถั่วงอกแม่โขง",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ลำตัว: เพรียวใส",
+        "ครีบหลัง: อยู่บริเวณส่วนท้ายลำตัว"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Gyrinocheilidae",
+      "scientific_name": "Gyrinocheilus aymonieri",
+      "thai_name": "สร้อยน้ำผึ้ง",
+      "local_name": "เกาะครีบใส",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบท้อง/ครีบก้น: มีจุดสีจางหรือไม่มี",
+        "เกล็ด: ในแนวเส้นข้างลำตัว 36-40 เกล็ด"
+      ]
+    },
+    {
+      "group": "Rays and Ancient Fishes",
+      "family": "Gyrinocheilidae",
+      "scientific_name": "Gyrinocheilus pennocki",
+      "thai_name": "สร้อยน้ำผึ้งแม่น้ำโขง",
+      "local_name": "เกาะครีบดำ",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบท้อง/ครีบก้น: มีจุดดำ",
+        "เกล็ด: ในแนวเส้นข้างลำตัว 40-44 เกล็ด"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Ambastaia nigrolineata",
+      "thai_name": "หมูน่าน",
+      "local_name": "หมูขั้นเฮือ",
+      "iucn_status": "EN",
+      "key_characteristics": ["สีสัน: ด้านหลังมีแถบสีดำตามยาว"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Syncrossus helodes",
+      "thai_name": "หมูข้างลาย",
+      "local_name": "หมูใบไผ่",
+      "iucn_status": "-",
+      "key_characteristics": ["สีสัน: ลำตัวมีแถบเฉียงตามขวาง และมีจุดจำนวนน้อย"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Syncrossus lucasbahi",
+      "thai_name": "หมูลายเสือ",
+      "local_name": "หมูลายจ่ำ",
+      "iucn_status": "-",
+      "key_characteristics": ["สีสัน: ลำตัวมีแถบเฉียงตามขวาง และมีจุดจำนวนมาก"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Yasuhikotakia caudipunctata",
+      "thai_name": "หมูหางจุด",
+      "local_name": "หมูหางดอก",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "หนามใต้ตา: มีขนาดใหญ่กว่าเส้นผ่านศูนย์กลางตา",
+        "ครีบหาง: มีจุดสีดำขนาดเล็กจำนวนมาก"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Yasuhikotakia eos",
+      "thai_name": "หมูครีบแดง",
+      "local_name": "หมูข้าวก่ำ",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "สีสัน: ครีบมีสีแดง",
+        "คอดหาง: มีแต้มสีดำขนาดใหญ่"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Yasuhikotakia lecontei",
+      "thai_name": "หมูสัก",
+      "local_name": "หมูยาว",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "สีสัน: หัว และลำตัวมีสีต่างกันในประชากรจากสีเขียวมะกอกถึงสีเทา",
+        "หนามใต้ตา: มีขนาดใหญ่กว่าเส้นผ่านศูนย์กลางตา"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Yasuhikotakia longidorsalis",
+      "thai_name": "หมูหลังยาว",
+      "local_name": "หมูหนวดสั้น",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัว: มีแถบจางตามขวาง 13-18 แถบ"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Yasuhikotakia modesta",
+      "thai_name": "หมูขาว",
+      "local_name": "หมูหางแดง",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "สีสัน: ครีบทั้งหมดมีสีแดง",
+        "คอดหาง: มีแถบตามขวางสีดำ"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Yasuhikotakia morleti",
+      "thai_name": "หมูคอก",
+      "local_name": "หมูหลังก่าน",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "สีสัน: หัว และลำตัวด้านบนมีแถบสีดำ จากปลายจะงอยปากถึงคอดหาง"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Botiidae",
+      "scientific_name": "Yasuhikotakia splendida",
+      "thai_name": "หมูหางดอก",
+      "local_name": "หมูหางจ่ำ",
+      "iucn_status": "VU",
+      "key_characteristics": ["ครีบหาง: มีจุดสีดำขนาดใหญ่จำนวนมาก"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Acanthopsoides delphax",
+      "thai_name": "รากกล้วยแคระหัวแหลม",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": ["จะงอยปาก: ยาว"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Acanthopsoides gracilentus",
+      "thai_name": "รากกล้วยแคระลาย",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ลำตัวด้านข้าง: มีจุดเรียงเป็นแถวตามแนวยาว 13-30 จุด"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Acanthopsoides hapalias",
+      "thai_name": "รากกล้วยแคระขาว",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ลำตัวด้านข้าง: มีจุดเรียงเป็นแถวตามแนวยาวน้อยกว่า 14 จุด"
+      ]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Acantopsis bruinen",
+      "thai_name": "รากกล้วยหัวโต",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": ["หนวด: ริมฝีปากมีหนวด 3 คู่"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Acantopsis ioa",
+      "thai_name": "รากกล้วยยาว",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหาง: ไม่มีจุดสีดำ"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Lepidocephalichthys hasselti",
+      "thai_name": "อีด",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหลัง: มีจุดเริ่มต้นหลังครีบท้องเล็กน้อย"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Lepidocephalichthys zeppelini",
+      "thai_name": "อีดน้อย",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหลัง: มีจุดเริ่มต้นหน้าครีบท้อง"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Pangio anguillaris",
+      "thai_name": "สายทอง",
+      "local_name": "อีดยาว",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัว: ยาวเหมือนหนอน"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Cobitidae",
+      "scientific_name": "Pangio fusca",
+      "thai_name": "งู",
+      "local_name": "อีดดำ",
+      "iucn_status": "-",
+      "key_characteristics": ["สีสัน: ลำตัวมีสีน้ำตาลอมชมพู"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Serpenticobitidae",
+      "scientific_name": "Serpenticobitis zonata",
+      "thai_name": "ค้อตาหนาม",
+      "local_name": "อีดเขียว",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัว: มีแถบตามขวางขนาดใหญ่สีเขียวเข้ม"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Nemacheilidae",
+      "scientific_name": "Nemacheilus masyae",
+      "thai_name": "ค้อมัศยะ",
+      "local_name": "อีดห้วยหางแฉก",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหาง: เว้าลึก"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Nemacheilidae",
+      "scientific_name": "Schistura clatrala",
+      "thai_name": "ค้อลายสาน",
+      "local_name": "อีดห้วยลายตอก",
+      "iucn_status": "-",
+      "key_characteristics": ["ริมฝีปาก: ริมฝีปากบนไม่มีร่องแยกในแนวกลาง"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Nemacheilidae",
+      "scientific_name": "Schistura dorsizona",
+      "thai_name": "ค้อท้องขาว",
+      "local_name": "อีดห้วยท้องขาว",
+      "iucn_status": "-",
+      "key_characteristics": ["เส้นข้างลำตัว: สมบูรณ์"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Nemacheilidae",
+      "scientific_name": "Schistura laterimaculata",
+      "thai_name": "ค้อลายแต้ม",
+      "local_name": "อีดห้วยลายแต้ม",
+      "iucn_status": "-",
+      "key_characteristics": ["เส้นข้างลำตัว: ไม่สมบูรณ์"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Balitoridae",
+      "scientific_name": "Balitora annamitica",
+      "thai_name": "จิ้งจกอันนัม",
+      "local_name": "แป๋มอันนัม",
+      "iucn_status": "-",
+      "key_characteristics": ["เกล็ด: มีเกล็ดอยู่หน้ารูทวาร"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Balitoridae",
+      "scientific_name": "Homalopteroides smithi",
+      "thai_name": "ติดหิน",
+      "local_name": "แป่มลายจ่ำ",
+      "iucn_status": "-",
+      "key_characteristics": ["เกล็ดในแนวเส้นข้างลำตัว: 62-67 เกล็ด"]
+    },
+    {
+      "group": "Loaches",
+      "family": "Balitoridae",
+      "scientific_name": "Pseudohomaloptera leonardi",
+      "thai_name": "ติดหินยาว",
+      "local_name": "แป๋มยาว",
+      "iucn_status": "-",
+      "key_characteristics": ["เกล็ดในแนวเส้นข้างลำตัว: 57-60 เกล็ด"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Cyprinidae",
+      "scientific_name": "Catlocarpio siamensis",
+      "thai_name": "กระโห้",
+      "local_name": null,
+      "iucn_status": "CR",
+      "key_characteristics": ["หัว: ใหญ่ ยาว 30-40% ของความยาวมาตรฐาน"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Cyprinidae",
+      "scientific_name": "Probarbus jullieni",
+      "thai_name": "ยี่สกทอง",
+      "local_name": "เอิน",
+      "iucn_status": "EN",
+      "key_characteristics": [
+        "ลาย: ลำตัวมีลายแถบตามยาว 5 แถบ เหนือเส้นข้างลำตัว"
+      ]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Cyprinidae",
+      "scientific_name": "Aaptosyax grypus",
+      "thai_name": "สะนากยักษ์",
+      "local_name": "สะนากใหญ่",
+      "iucn_status": "CR",
+      "key_characteristics": ["ตา: เยื่อไขมันคลุมตา"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Cyprinidae",
+      "scientific_name": "Puntioplites falcifer",
+      "thai_name": "วี",
+      "local_name": "สะกางเกสูง",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหลัง: มีก้านครีบแข็งยื่นยาว ขอบเป็นซี่จักร"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Cyprinidae",
+      "scientific_name": "Incisilabeo behri",
+      "thai_name": "หว้าหน้านอ",
+      "local_name": "หว่ำหน้านอ",
+      "iucn_status": "VU",
+      "key_characteristics": ["จะงอยปาก: มีลักษณะเด่นเป็นรอยบากตามขวางขนาดใหญ่"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Danionidae",
+      "scientific_name": "Boraras micros",
+      "thai_name": "ซิวแคระสามจุด",
+      "local_name": "ซิวน้อยสามจุด",
+      "iucn_status": "-",
+      "key_characteristics": ["ขนาด: เล็กมาก ความยาวมาตรฐานน้อยกว่า 2 ซม."]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Danionidae",
+      "scientific_name": "Laubuka caeruleostigmata",
+      "thai_name": "ท้องพลุ",
+      "local_name": "แตบหัวเงิน",
+      "iucn_status": "EN",
+      "key_characteristics": ["หัว: มีแต้มสีฟ้า"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Leptobarbidae",
+      "scientific_name": "Leptobarbus rubripinna",
+      "thai_name": "บ้า",
+      "local_name": "โพง",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบ: ครีบท้อง ครีบก้น และครีบหางมีสีแดง"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Xenocyprididae",
+      "scientific_name": "Hypophthalmichthys molitrix",
+      "thai_name": "เกล็ดเงิน",
+      "local_name": "จีนเกล็ดแลบ",
+      "iucn_status": "Alien (China)",
+      "key_characteristics": [
+        "ตา: อยู่ด้านล่างของส่วนหัว",
+        "เกล็ด: ขนาดเล็ก (91-124 lateral line scales)"
+      ]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Xenocyprididae",
+      "scientific_name": "Macrochirichthys macrochirus",
+      "thai_name": "ฝักพร้า",
+      "local_name": "ลับพร้า",
+      "iucn_status": "VU",
+      "key_characteristics": ["ปาก: เปิดด้านบน"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Xenocyprididae",
+      "scientific_name": "Parachela oxygastroides",
+      "thai_name": "แปบใส",
+      "local_name": "แตบแก้ว",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบก้น: มีก้านครีบอ่อนที่แตกแขนง 31-33 ก้าน"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Acheilognathidae",
+      "scientific_name": "Rhodeus ocellatus",
+      "thai_name": "ไข่หอย",
+      "local_name": "เบี้ย",
+      "iucn_status": "Alien (China)",
+      "key_characteristics": ["เพศเมีย: มีท่อว่างไข่ (ovipositor)"]
+    },
+    {
+      "group": "Cyprinids and Minnows",
+      "family": "Serrasalmidae",
+      "scientific_name": "Piaractus brachypomus",
+      "thai_name": "จะละเม็ดน้ำจืด",
+      "local_name": null,
+      "iucn_status": "Alien (South America)",
+      "key_characteristics": ["สีสัน: อกและท้องสีแดง"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Akysidae",
+      "scientific_name": "Akysis bilustris",
+      "thai_name": "ขยุยแคระครีบยาว",
+      "local_name": "ขี้เหี้ยน้อยปีกยาว",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบอก: ยาวถึงครีบท้อง"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Amblycipitidae",
+      "scientific_name": "Amblyceps caecutiens",
+      "thai_name": "ดักหัวตู่",
+      "local_name": "ดุกหางแฉก",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหาง: เว้าลึก"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Sisoridae",
+      "scientific_name": "Bagarius lica",
+      "thai_name": "แค้ควาย",
+      "local_name": "แข่ควาย",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบท้อง: มีจุดเริ่มต้นอยู่หลังจุดสิ้นสุดของครีบหลัง"
+      ]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Sisoridae",
+      "scientific_name": "Glyptothorax fuscus",
+      "thai_name": "แค้ติดหินลายจุด",
+      "local_name": "แข่หินลายดอก",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "อวัยวะยึดเกาะ: มีแผ่นยึดเกาะบริเวณใต้คอและหน้าอก"
+      ]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Siluridae",
+      "scientific_name": "Belodontichthys truncatus",
+      "thai_name": "คางเบือน",
+      "local_name": "ขบ",
+      "iucn_status": "-",
+      "key_characteristics": ["ปาก: เฉียงขึ้นด้านบน"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Siluridae",
+      "scientific_name": "Kryptopterus vitreolus",
+      "thai_name": "ก้างพระร่วง",
+      "local_name": "ผี",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัว: โปร่งใสในปลาสด"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Siluridae",
+      "scientific_name": "Wallago micropogon",
+      "thai_name": "เค้าดำ",
+      "local_name": "คูน",
+      "iucn_status": "VU",
+      "key_characteristics": ["ปาก: สั้น มุมปากไม่ถึงตา"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Clariidae",
+      "scientific_name": "Clarias batrachus",
+      "thai_name": "ดุกด้าน",
+      "local_name": "ดุกเอ็น",
+      "iucn_status": "-",
+      "key_characteristics": ["หัว: ผิวด้านบนขรุขระ"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Clariidae",
+      "scientific_name": "Clarias macrocephalus",
+      "thai_name": "ดุกอุย",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": ["หัว: ผิวด้านบนเรียบ"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Ailiidae",
+      "scientific_name": "Laides longibarbis",
+      "thai_name": "สังกะวาดขาว",
+      "local_name": "ยอนขึ้นกหงส์",
+      "iucn_status": "-",
+      "key_characteristics": ["หนวด: หนวดบนจะงอยปาก 1 คู่"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Pangasiidae",
+      "scientific_name": "Pangasianodon gigas",
+      "thai_name": "บึก",
+      "local_name": null,
+      "iucn_status": "CR",
+      "key_characteristics": ["หนวด: หนวดยาวกว่าหัว"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Pangasiidae",
+      "scientific_name": "Pangasianodon hypophthalmus",
+      "thai_name": "สวาย",
+      "local_name": "ซวย",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบท้อง: มีก้านครีบอ่อน 8-9 ก้าน"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Pangasiidae",
+      "scientific_name": "Pangasius sanitwongsei",
+      "thai_name": "เทพา",
+      "local_name": "เลิม",
+      "iucn_status": "CR",
+      "key_characteristics": [
+        "ครีบ: ครีบหลัง ครีบอก และครีบท้อง มีปลายครีบยาวเป็นเส้น"
+      ]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Bagridae",
+      "scientific_name": "Bagrichthys majusculus",
+      "thai_name": "ดุกมูนครีบสูง",
+      "local_name": "ดุกมูลเกสูง",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบหลัง/ครีบไขมัน: ครีบหลังยาว ครีบไขมันมีฐานครีบยาว"
+      ]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Bagridae",
+      "scientific_name": "Hemibagrus wyckii",
+      "thai_name": "กดดำ",
+      "local_name": "กดหม้อ",
+      "iucn_status": "-",
+      "key_characteristics": ["สีสัน: หัว ลำตัวและครีบหางมีสีดำ"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Bagridae",
+      "scientific_name": "Mystus albolineatus",
+      "thai_name": "แขยงแถบขาว",
+      "local_name": "ขะแยงแถบขาว",
+      "iucn_status": "-",
+      "key_characteristics": ["ลาย: ลำตัวมีแถบเป็นเส้นสีขาวกลางลำตัว"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Bagridae",
+      "scientific_name": "Mystus singaringan",
+      "thai_name": "แขยงใบข้าว",
+      "local_name": "ขะแยงหนวดยาว",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหลัง: มีก้านครีบแข็งยาวมาก มีขอบเรียบ"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Ictaluridae",
+      "scientific_name": "Ictalurus punctatus",
+      "thai_name": "กดหลวง",
+      "local_name": null,
+      "iucn_status": "Alien (North America)",
+      "key_characteristics": ["ครีบหาง: มีแถบสีดำตามขวาง"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Mochokidae",
+      "scientific_name": "Synodontis eupterus",
+      "thai_name": "กดกลับหัวอัฟริกัน",
+      "local_name": "กดกลับหัว",
+      "iucn_status": "Alien (Africa)",
+      "key_characteristics": ["ครีบหลัง: มีก้านครีบยาวเป็นเส้น"]
+    },
+    {
+      "group": "Catfishes",
+      "family": "Loricariidae",
+      "scientific_name": "Pterygoplichthys disjunctivus",
+      "thai_name": "กดเกราะ",
+      "local_name": "ดูดฝุ่น",
+      "iucn_status": "Alien (South America)",
+      "key_characteristics": ["หัว/ลำตัว: เป็นเกราะแข็ง"]
+    },
+    {
+      "group": "Others",
+      "family": "Sygnathidae",
+      "scientific_name": "Doryichthys contiguus",
+      "thai_name": "จิ้มฟันจระเข้แม่น้ำโขง",
+      "local_name": "เหล็กซี่",
+      "iucn_status": "-",
+      "key_characteristics": ["ปาก: มีลักษณะเป็นท่อ"]
+    },
+    {
+      "group": "Others",
+      "family": "Odontobutidae",
+      "scientific_name": "Neodontobutis aurarmus",
+      "thai_name": "บู่กุดทิง",
+      "local_name": "บู่น้อยกุดทิง",
+      "iucn_status": "-",
+      "key_characteristics": ["หัว: ไม่มีท่อและรูรับความรู้สึก"]
+    },
+    {
+      "group": "Others",
+      "family": "Gobiidae",
+      "scientific_name": "Brachygobius mekongensis",
+      "thai_name": "บู่แคระแม่น้ำโขง",
+      "local_name": "บู่เสือน้อยแม่โขง",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบท้อง: สองข้างเชื่อมกัน ไม่ติดกับท้อง"]
+    },
+    {
+      "group": "Others",
+      "family": "Gobiidae",
+      "scientific_name": "Glossogobius giuris",
+      "thai_name": "บู่ทอง",
+      "local_name": "บู่หินหัวแหลม",
+      "iucn_status": "-",
+      "key_characteristics": ["แก้ม: มีแถวของท่อระบบรับความรู้สึกตามยาว 5 แถว"]
+    },
+    {
+      "group": "Others",
+      "family": "Gobiidae",
+      "scientific_name": "Gobiopterus chuno",
+      "thai_name": "บู่ใส",
+      "local_name": "บู่แก้ว",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัว: ใสในปลาสด"]
+    },
+    {
+      "group": "Others",
+      "family": "Mastacembelidae",
+      "scientific_name": "Macrognathus siamensis",
+      "thai_name": "หลด",
+      "local_name": null,
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหาง: แยกจากครีบหลังและครีบก้น"]
+    },
+    {
+      "group": "Others",
+      "family": "Mastacembelidae",
+      "scientific_name": "Mastacembelus armatus",
+      "thai_name": "กระทิง",
+      "local_name": "หลาดลาย",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหาง: เชื่อมกับครีบหลังและครีบก้น"]
+    },
+    {
+      "group": "Others",
+      "family": "Indostomidae",
+      "scientific_name": "Indostomus spinosus",
+      "thai_name": "จิ้มฟันจระเข้แคระ",
+      "local_name": "เหล็กไน",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัว: คลุมด้วยแผ่นกระดูก"]
+    },
+    {
+      "group": "Others",
+      "family": "Synbranchidae",
+      "scientific_name": "Monopterus javanensis",
+      "thai_name": "ไหลนา",
+      "local_name": "เอี่ยน",
+      "iucn_status": "-",
+      "key_characteristics": ["ช่องเปิดเหงือก: มีรูปร่างเป็นพระจันทร์เสี้ยว"]
+    },
+    {
+      "group": "Others",
+      "family": "Anabantidae",
+      "scientific_name": "Anabas testudineus",
+      "thai_name": "หมอ",
+      "local_name": "เข็ง",
+      "iucn_status": "-",
+      "key_characteristics": ["กระดูกแผ่นปิดเหงือก: ขอบเป็นซี่จักร"]
+    },
+    {
+      "group": "Others",
+      "family": "Osphronemidae",
+      "scientific_name": "Betta splendens",
+      "thai_name": "กัดไทย",
+      "local_name": "กัดแดง",
+      "iucn_status": "VU",
+      "key_characteristics": ["เพศผู้: ครีบหางสีแดง"]
+    },
+    {
+      "group": "Others",
+      "family": "Osphronemidae",
+      "scientific_name": "Osphronemus exodon",
+      "thai_name": "แรดแม่น้ำโขง",
+      "local_name": "เม่น",
+      "iucn_status": "VU",
+      "key_characteristics": ["ครีบหลัง: มีก้านครีบแข็ง 14-16 ก้าน"]
+    },
+    {
+      "group": "Others",
+      "family": "Channidae",
+      "scientific_name": "Channa striata",
+      "thai_name": "ช่อน",
+      "local_name": "ค้อ",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัว: มีลายบั้งตามขวาง"]
+    },
+    {
+      "group": "Others",
+      "family": "Latiidae",
+      "scientific_name": "Lates calcarifer",
+      "thai_name": "กะพงขาว",
+      "local_name": "กะพง",
+      "iucn_status": "Alien (Coastal)",
+      "key_characteristics": ["ครีบหลัง: แยกออกเป็นสองตอน"]
+    },
+    {
+      "group": "Others",
+      "family": "Soleidae",
+      "scientific_name": "Brachirus harmandi",
+      "thai_name": "ใบไม้",
+      "local_name": "ลิ้นหมา",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบ: ครีบหลัง ครีบก้น และครีบหางเชื่อมกัน"]
+    },
+    {
+      "group": "Others",
+      "family": "Toxotidae",
+      "scientific_name": "Toxotes mekongensis",
+      "thai_name": "เสือพ่นน้ำแม่น้ำโขง",
+      "local_name": "หม้อง",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ลาย: ลำตัวมีจุดสีดำขนาดใหญ่สลับกับจุดสีดำขนาดเล็ก"
+      ]
+    },
+    {
+      "group": "Others",
+      "family": "Cichlidae",
+      "scientific_name": "Oreochromis niloticus",
+      "thai_name": "นิล",
+      "local_name": null,
+      "iucn_status": "Alien (Africa)",
+      "key_characteristics": ["ครีบหาง: มีลายตามขวาง"]
+    },
+    {
+      "group": "Others",
+      "family": "Poeciliidae",
+      "scientific_name": "Poecilia reticulata",
+      "thai_name": "หางนกยูง",
+      "local_name": null,
+      "iucn_status": "Alien (South America)",
+      "key_characteristics": ["เพศผู้: มีลำตัวและครีบลวดลายสวยงาม"]
+    },
+    {
+      "group": "Others",
+      "family": "Zenarchopteridae",
+      "scientific_name": "Dermogenys siamensis",
+      "thai_name": "เข็ม",
+      "local_name": "สบโทงน้อย",
+      "iucn_status": "-",
+      "key_characteristics": [
+        "ครีบก้น: ก้านครีบด้านหน้าพัฒนาเป็น \"andropodium\" ในเพศผู้"
+      ]
+    },
+    {
+      "group": "Others",
+      "family": "Adrianichthyidae",
+      "scientific_name": "Oryzias songkhramensis",
+      "thai_name": "ซิวข้าวสารแม่น้ำสงคราม",
+      "local_name": "ซิวข้าวน้ำสงคราม",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหาง: ขอบครีบมีแถบสีแดง และสีดำ"]
+    },
+    {
+      "group": "Others",
+      "family": "Sciaenidae",
+      "scientific_name": "Boesemania microlepis",
+      "thai_name": "ม้า",
+      "local_name": "กวง",
+      "iucn_status": "-",
+      "key_characteristics": ["ครีบหาง: รูปร่างเหมือนใบหอก"]
+    },
+    {
+      "group": "Others",
+      "family": "Lobotidae",
+      "scientific_name": "Datnioides pulcher",
+      "thai_name": "เสือตอ",
+      "local_name": "เสือบั้งใหญ่",
+      "iucn_status": "CR",
+      "key_characteristics": [
+        "ลายบั้ง: แถบที่สองบนลำตัวอยู่ระหว่างก้านครีบแข็งก้านที่สองและก้านที่ห้า"
+      ]
+    },
+    {
+      "group": "Others",
+      "family": "Tetraodontidae",
+      "scientific_name": "Auriglobus nefastus",
+      "thai_name": "ปักเป้าทอง",
+      "local_name": "เป้าเขียว",
+      "iucn_status": "-",
+      "key_characteristics": ["ลำตัวด้านหลัง: ไม่มีแต้ม สีเขียวแกมเหลืองสดใส"]
+    },
+    {
+      "group": "Others",
+      "family": "Tetraodontidae",
+      "scientific_name": "Pao baileyi",
+      "thai_name": "ปักเป้าขน",
+      "local_name": "เป้าขน",
+      "iucn_status": "-",
+      "key_characteristics": ["ผิวหนัง: ปกคลุมด้วยติ่งเนื้อจำนวนน้อย"]
+    },
+    {
+      "group": "Others",
+      "family": "Tetraodontidae",
+      "scientific_name": "Pao palustris",
+      "thai_name": "ปักเป้าบึง",
+      "local_name": "เป้าจุดดำ",
+      "iucn_status": "-",
+      "key_characteristics": ["จะงอยปาก: สั้น", "คอดหาง: ผิวด้านบนเรียบ"]
+    }
+  ],
+  "source_citation": {
+    "description": "Data extracted from summary Part 4: Species Identification",
+    "original_pages": "1-116",
+    "cite_ref": "42-103"
+  }
+}

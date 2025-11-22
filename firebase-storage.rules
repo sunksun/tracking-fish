@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Fish Tracking App
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow authenticated users to upload and read images in fishing-records directory
+    match /fishing-records/{userId}/{recordId}/{imageFile} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow read access to all images for CDN functionality
+    // This enables public access to image URLs for viewing
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+    
+    // Optional: Restrict file sizes and types
+    // Uncomment and modify as needed
+    // match /fishing-records/{userId}/{recordId}/{imageFile} {
+    //   allow write: if request.auth != null 
+    //                && resource.size < 5 * 1024 * 1024  // 5MB limit
+    //                && request.resource.contentType.matches('image/.*'); // Only images
+    // }
+  }
+}
