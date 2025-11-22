@@ -46,7 +46,7 @@ GoogleService-Info.plist
 .env
 .env.local
 
-# Debug and utility scripts (optional - uncomment to ignore)
-# check-firestore-data.js
-# check-user-data.js
-# convert-csv.js
+# Debug and utility scripts - These contain Firebase credentials!
+check-firestore-data.js
+check-user-data.js
+convert-csv.js
