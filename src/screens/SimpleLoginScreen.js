@@ -91,11 +91,11 @@ export default function SimpleLoginScreen() {
             <Text variant="titleMedium" style={styles.loginTitle}>
               เข้าสู่ระบบ
             </Text>
-            
+
             <Text variant="bodyMedium" style={styles.subtitle}>
               กรอกหมายเลขโทรศัพท์เพื่อเข้าสู่ระบบ
             </Text>
-            
+
             <TextInput
               label="เบอร์โทรศัพท์"
               value={getFormattedPhone()}
@@ -125,15 +125,14 @@ export default function SimpleLoginScreen() {
           </Card.Content>
         </Card>
 
-      </View>
-
-      {/* Project Title Footer */}
-      <View style={styles.footer}>
-        <Text variant="bodySmall" style={styles.projectTitle}>
-          ภายใต้โครงการวิจัย{'\n'}
-          การจัดการความหลากหลายทางชีวภาพของพันธุ์ปลาในแม่นํ้าโขง{'\n'}
-          อ.เชียงคาน - อ.ปากชม
-        </Text>
+        {/* Project Title Footer */}
+        <View style={styles.footer}>
+          <Text variant="bodySmall" style={styles.projectTitle}>
+            ภายใต้โครงการวิจัย{'\n'}
+            การจัดการความหลากหลายทางชีวภาพของพันธุ์ปลาในแม่นํ้าโขง{'\n'}
+            อ.เชียงคาน - อ.ปากชม
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -181,11 +180,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: 80, // ขยับ card ขึ้นด้านบน
-    paddingBottom: 100, // เผื่อพื้นที่สำหรับ footer
   },
   card: {
     width: '100%',
-    marginBottom: 16,
+    marginBottom: 24,
     elevation: 4,
   },
   loginTitle: {
@@ -207,13 +205,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    width: '100%',
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: 'rgba(245, 245, 245, 0.95)',
+    paddingVertical: 16,
+    backgroundColor: 'transparent',
   },
   projectTitle: {
     textAlign: 'center',

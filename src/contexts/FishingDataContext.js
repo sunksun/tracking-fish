@@ -140,12 +140,12 @@ export function FishingDataProvider({ children }) {
     saveDataToStorage();
   }, [state.fishingHistory, state.fisherInfo]);
 
-  // Sync with Firebase when user is authenticated
+  // Sync with Firebase when user is authenticated or selectedFisher changes
   useEffect(() => {
     if (isAuthenticated && user) {
       syncWithFirebase();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, selectedFisher]);
 
   const loadStoredData = async () => {
     try {
@@ -180,10 +180,15 @@ export function FishingDataProvider({ children }) {
     try {
       dispatch({ type: actionTypes.SET_SYNC_STATUS, payload: { status: 'syncing' } });
 
-      console.log('🔄 Syncing with Firebase for user:', user.id);
+      // กำหนด userId ที่จะโหลดข้อมูล
+      // - ถ้าเป็นนักวิจัยและเลือกชาวประมงแล้ว ให้โหลดข้อมูลของชาวประมง
+      // - ถ้าเป็นชาวประมงเข้าใช้เอง ให้โหลดข้อมูลของตัวเอง
+      const targetUserId = isResearcher && selectedFisher ? selectedFisher.id : user.id;
+
+      console.log('🔄 Syncing with Firebase for user:', targetUserId, isResearcher ? '(researcher mode)' : '(fisher mode)');
 
       // Load fishing records from Firebase
-      const result = await FirebaseService.getFishingRecords(user.id);
+      const result = await FirebaseService.getFishingRecords(targetUserId);
 
       if (result.success) {
         console.log(`✅ Loaded ${result.records.length} records from Firebase`);
@@ -198,7 +203,7 @@ export function FishingDataProvider({ children }) {
         dispatch({ type: actionTypes.LOAD_HISTORY, payload: formattedRecords });
         dispatch({ type: actionTypes.SET_SYNC_STATUS, payload: { status: 'success' } });
 
-        console.log(`📊 Loaded ${formattedRecords.length} records for current user`);
+        console.log(`📊 Loaded ${formattedRecords.length} records for ${isResearcher && selectedFisher ? 'selected fisher' : 'current user'}`);
       } else {
         throw new Error(result.error);
       }

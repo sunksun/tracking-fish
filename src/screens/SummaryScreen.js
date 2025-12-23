@@ -15,6 +15,21 @@ export default function SummaryScreen({ navigation }) {
   const { currentEntry, saveEntry, resetCurrentEntry, fisherInfo } = useFishingData();
   const { user, selectedFisher, isResearcher } = useAuth();
 
+  // Debug: แสดงข้อมูลที่จะบันทึก
+  if (__DEV__) {
+    console.log('📋 SummaryScreen - Current Entry:', {
+      waterSource: currentEntry.waterSource,
+      weather: currentEntry.weather,
+      fishingGear: currentEntry.fishingGear,
+      startTime: currentEntry.startTime,
+      endTime: currentEntry.endTime,
+      totalWeight: currentEntry.totalWeight,
+      noFishing: currentEntry.noFishing,
+      isResearcher,
+      selectedFisher: selectedFisher?.name
+    });
+  }
+
   const formatTime = (time) => {
     if (!time) return '-';
     
@@ -261,13 +276,6 @@ export default function SummaryScreen({ navigation }) {
                   <Text variant="bodyMedium" style={styles.label}>น้ำหนักปลาทั้งหมด:</Text>
                   <Text variant="bodyMedium">{currentEntry.totalWeight || '-'} กก.</Text>
                 </View>
-                
-                {currentEntry.sampleWeight && (
-                  <View style={styles.infoRow}>
-                    <Text variant="bodyMedium" style={styles.label}>น้ำหนักตัวอย่าง:</Text>
-                    <Text variant="bodyMedium">{currentEntry.sampleWeight} กก.</Text>
-                  </View>
-                )}
               </>
             )}
           </Card.Content>

@@ -10,6 +10,7 @@ import {
   Divider,
   Icon
 } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 import { FirebaseService } from '../services/FirebaseService';
 
@@ -44,22 +45,69 @@ export default function SelectFisherScreen({ navigation }) {
   const loadFishers = async () => {
     try {
       setLoading(true);
+
+      // 1. ลองอ่านจาก AsyncStorage cache ก่อน
+      const cachedData = await AsyncStorage.getItem('fisher_list_cache');
+      const cacheTime = await AsyncStorage.getItem('fisher_list_cache_time');
+
+      const now = Date.now();
+      const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 วัน
+
+      // 2. ถ้ามี cache และยังไม่หมดอายุ ใช้ cache
+      if (cachedData && cacheTime) {
+        const timeSinceCache = now - parseInt(cacheTime);
+
+        if (timeSinceCache < CACHE_DURATION) {
+          if (__DEV__) {
+            const daysOld = Math.floor(timeSinceCache / (24 * 60 * 60 * 1000));
+            console.log(`✅ Using cached fisher list (${daysOld} days old, expires in ${7 - daysOld} days)`);
+          }
+
+          const fishersData = JSON.parse(cachedData);
+          setFishers(fishersData);
+          setFilteredFishers(fishersData);
+          setLoading(false);
+          return;
+        } else {
+          if (__DEV__) console.log('⚠️ Cache expired, fetching from Firebase...');
+        }
+      } else {
+        if (__DEV__) console.log('⚠️ No cache found, fetching from Firebase...');
+      }
+
+      // 3. ถ้าไม่มี cache หรือหมดอายุ → ดึงจาก Firebase
+      if (__DEV__) console.log('🔄 Starting to load fishers from Firebase...');
       const result = await FirebaseService.getActiveFishers();
 
+      if (__DEV__) console.log('📊 Result:', result);
+
       if (result.success) {
-        console.log('📋 Loaded fishers:', result.fishers);
-        // Debug: แสดงข้อมูลชาวประมงคนแรก
-        if (result.fishers.length > 0) {
-          console.log('🔍 Sample fisher data:', result.fishers[0]);
+        if (__DEV__) {
+          console.log('✅ Loaded fishers from Firebase:', result.fishers.length);
+          if (result.fishers.length > 0) {
+            console.log('🔍 Sample fisher data:', result.fishers[0]);
+          }
         }
+
+        // 4. บันทึกลง AsyncStorage cache
+        try {
+          await AsyncStorage.setItem('fisher_list_cache', JSON.stringify(result.fishers));
+          await AsyncStorage.setItem('fisher_list_cache_time', now.toString());
+          if (__DEV__) console.log('💾 Cached fisher list data for 7 days');
+        } catch (cacheError) {
+          // ถ้า cache ไม่ได้ก็ไม่เป็นไร ยังใช้งานได้ปกติ
+          if (__DEV__) console.error('⚠️ Failed to cache data:', cacheError);
+        }
+
         setFishers(result.fishers);
         setFilteredFishers(result.fishers);
       } else {
-        Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลชาวประมงได้');
+        console.error('❌ Failed to load:', result.error);
+        Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลชาวประมงได้: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Error loading fishers:', error);
-      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลชาวประมงได้');
+      console.error('❌ Error loading fishers:', error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลชาวประมงได้: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -188,19 +236,19 @@ export default function SelectFisherScreen({ navigation }) {
             </Card.Content>
           </Card>
         )}
-      </ScrollView>
 
-      {/* Footer Buttons */}
-      <View style={styles.footer}>
-        <Button
-          mode="outlined"
-          onPress={() => navigation.goBack()}
-          style={styles.footerButton}
-          icon="arrow-left"
-        >
-          กลับ
-        </Button>
-      </View>
+        {/* Back Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="outlined"
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            icon="arrow-left"
+          >
+            กลับ
+          </Button>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -299,16 +347,12 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
   },
-  footer: {
+  buttonContainer: {
     padding: 16,
-    backgroundColor: '#fff',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
-  footerButton: {
+  backButton: {
+    marginTop: 8,
+    marginBottom: 32,
     borderColor: '#2196F3',
   },
 });

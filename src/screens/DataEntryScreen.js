@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform, Alert, Modal } from 'react-native';
-import { 
-  Button, 
-  Card, 
-  Text, 
-  TextInput, 
-  Checkbox, 
+import {
+  Button,
+  Card,
+  Text,
+  TextInput,
+  Checkbox,
   RadioButton,
   Chip,
   Divider
@@ -14,6 +14,7 @@ import {
 import MapPlaceholder from '../components/MapPlaceholder';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { FirebaseService } from '../services/FirebaseService';
 
@@ -84,8 +85,7 @@ export default function DataEntryScreen({ navigation }) {
     fishingGear: currentEntry.fishingGear || null,
     startTime: currentEntry.startTime || '',
     endTime: currentEntry.endTime || '',
-    totalWeight: currentEntry.totalWeight || '',
-    sampleWeight: currentEntry.sampleWeight || ''
+    totalWeight: currentEntry.totalWeight || ''
   });
 
   const [gearDetails, setGearDetails] = useState({
@@ -105,15 +105,67 @@ export default function DataEntryScreen({ navigation }) {
   const loadFishingSpots = async () => {
     try {
       setLoadingSpots(true);
+
+      // 1. ลองอ่านจาก AsyncStorage cache ก่อน
+      const cachedData = await AsyncStorage.getItem('fishing_spots_cache');
+      const cacheTime = await AsyncStorage.getItem('fishing_spots_cache_time');
+
+      const now = Date.now();
+      const CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 วัน
+
+      // 2. ถ้ามี cache และยังไม่หมดอายุ ใช้ cache
+      if (cachedData && cacheTime) {
+        const timeSinceCache = now - parseInt(cacheTime);
+
+        if (timeSinceCache < CACHE_DURATION) {
+          if (__DEV__) {
+            const daysOld = Math.floor(timeSinceCache / (24 * 60 * 60 * 1000));
+            console.log(`✅ Using cached fishing spots (${daysOld} days old, expires in ${30 - daysOld} days)`);
+          }
+
+          const spots = JSON.parse(cachedData);
+          setFishingSpots(spots);
+          setLoadingSpots(false);
+          return;
+        } else {
+          if (__DEV__) console.log('⚠️ Cache expired, fetching from Firebase...');
+        }
+      } else {
+        if (__DEV__) console.log('⚠️ No cache found, fetching from Firebase...');
+      }
+
+      // 3. ถ้าไม่มี cache หรือหมดอายุ → ดึงจาก Firebase
+      if (__DEV__) console.log('🔄 Starting to load fishing spots from Firebase...');
       const result = await FirebaseService.getFishingSpots();
+
+      if (__DEV__) console.log('📊 Result:', result);
+
       if (result.success) {
+        if (__DEV__) {
+          console.log('✅ Loaded fishing spots from Firebase:', result.spots.length);
+          if (result.spots.length > 0) {
+            console.log('📍 Sample spot:', result.spots[0]);
+          }
+        }
+
+        // 4. บันทึกลง AsyncStorage cache
+        try {
+          await AsyncStorage.setItem('fishing_spots_cache', JSON.stringify(result.spots));
+          await AsyncStorage.setItem('fishing_spots_cache_time', now.toString());
+          if (__DEV__) console.log('💾 Cached fishing spots data for 30 days');
+        } catch (cacheError) {
+          // ถ้า cache ไม่ได้ก็ไม่เป็นไร ยังใช้งานได้ปกติ
+          if (__DEV__) console.error('⚠️ Failed to cache data:', cacheError);
+        }
+
         setFishingSpots(result.spots);
       } else {
-        Alert.alert('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลจุดจับปลาได้');
+        console.error('❌ Failed to load:', result.error);
+        Alert.alert('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลจุดจับปลาได้: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Error loading fishing spots:', error);
-      Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการโหลดข้อมูลจุดจับปลา');
+      console.error('❌ Error loading fishing spots:', error);
+      Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการโหลดข้อมูลจุดจับปลา: ' + error.message);
     } finally {
       setLoadingSpots(false);
     }
@@ -574,18 +626,6 @@ export default function DataEntryScreen({ navigation }) {
                 <TextInput
                   value={localData.totalWeight}
                   onChangeText={(value) => setLocalData({ ...localData, totalWeight: value })}
-                  keyboardType="numeric"
-                  mode="outlined"
-                  placeholder="0.00"
-                  style={styles.weightInput}
-                />
-
-                <Text variant="bodyMedium" style={styles.subTitle}>
-                  น้ำหนักปลาที่สุ่มตัวอย่าง (กิโลกรัม)
-                </Text>
-                <TextInput
-                  value={localData.sampleWeight}
-                  onChangeText={(value) => setLocalData({ ...localData, sampleWeight: value })}
                   keyboardType="numeric"
                   mode="outlined"
                   placeholder="0.00"

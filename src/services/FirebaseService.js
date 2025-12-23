@@ -299,11 +299,20 @@ export class FirebaseService {
     const record = { ...firebaseRecord };
 
     // Convert Firestore timestamps if they exist
+    if (record.date && record.date.toDate) {
+      record.date = record.date.toDate().toISOString();
+    }
     if (record.createdAt && record.createdAt.toDate) {
       record.createdAt = record.createdAt.toDate().toISOString();
     }
     if (record.updatedAt && record.updatedAt.toDate) {
       record.updatedAt = record.updatedAt.toDate().toISOString();
+    }
+    if (record.startTime && record.startTime.toDate) {
+      record.startTime = record.startTime.toDate().toISOString();
+    }
+    if (record.endTime && record.endTime.toDate) {
+      record.endTime = record.endTime.toDate().toISOString();
     }
 
     return record;

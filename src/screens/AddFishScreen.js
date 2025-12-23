@@ -7,8 +7,7 @@ import {
   TextInput,
   List,
   IconButton,
-  Divider,
-  FAB
+  Divider
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -205,15 +204,15 @@ export default function AddFishScreen({ navigation, route }) {
   };
 
   const getTotalCount = () => {
-    return currentEntry.fishList.reduce((total, fish) => total + parseInt(fish.count || 0), 0);
+    return currentEntry.fishList.reduce((total, fish) => total + (parseInt(fish.count, 10) || 0), 0);
   };
 
   const getTotalWeight = () => {
-    return currentEntry.fishList.reduce((total, fish) => total + parseFloat(fish.weight || 0), 0).toFixed(2);
+    return currentEntry.fishList.reduce((total, fish) => total + (parseFloat(fish.weight) || 0), 0).toFixed(2);
   };
 
   const getTotalValue = () => {
-    return currentEntry.fishList.reduce((total, fish) => total + parseFloat(fish.price || 0), 0).toFixed(2);
+    return currentEntry.fishList.reduce((total, fish) => total + (parseFloat(fish.price) || 0), 0).toFixed(2);
   };
 
   const handleContinue = () => {
@@ -454,16 +453,19 @@ export default function AddFishScreen({ navigation, route }) {
               </Card.Content>
             </Card>
           )}
+
+          {/* Continue Button */}
+          <Button
+            mode="contained"
+            icon="arrow-right"
+            onPress={handleContinue}
+            style={styles.continueButton}
+            contentStyle={styles.continueButtonContent}
+          >
+            ไปหน้าสรุป
+          </Button>
         </View>
       </ScrollView>
-
-      {/* Continue FAB */}
-      <FAB
-        icon="arrow-right"
-        label="ไปหน้าสรุป"
-        style={styles.fab}
-        onPress={handleContinue}
-      />
     </View>
   );
 }
@@ -478,7 +480,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 100, // Space for FAB
   },
   card: {
     marginBottom: 16,
@@ -594,12 +595,13 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
   },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
+  continueButton: {
+    marginTop: 24,
+    marginBottom: 32,
     backgroundColor: '#2196F3',
+  },
+  continueButtonContent: {
+    paddingVertical: 8,
   },
   photoTitle: {
     marginBottom: 8,

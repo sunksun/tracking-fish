@@ -1,12 +1,64 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, Alert, Image } from 'react-native';
-import { Button, Card, Text, Icon } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Button, Card, Text, Icon, IconButton } from 'react-native-paper';
+import { useState } from 'react';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function HomeScreen({ navigation }) {
-  const { fishingHistory } = useFishingData();
+  const { fishingHistory, syncWithFirebase } = useFishingData();
   const { user, selectedFisher, isResearcher, signOut, clearSelectedFisher } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // ฟังก์ชันสำหรับกดปุ่ม refresh
+  const handleRefresh = async () => {
+    if (isRefreshing) return; // ป้องกันการกด refresh ซ้ำ
+
+    setIsRefreshing(true);
+    if (__DEV__) console.log('🔄 Manual refresh triggered...');
+
+    try {
+      if (syncWithFirebase) {
+        await syncWithFirebase();
+      }
+    } catch (error) {
+      console.error('Error refreshing:', error);
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 1000);
+    }
+  };
+
+  // Filter fishing history based on selected fisher or current user
+  const getFilteredHistory = () => {
+    // ตรวจสอบว่า user มีข้อมูลหรือไม่
+    if (!user || !user.id) {
+      if (__DEV__) console.log('⚠️ User or user.id is null/undefined');
+      return [];
+    }
+
+    if (isResearcher && selectedFisher) {
+      // นักวิจัยเลือกชาวประมง → แสดงข้อมูลของชาวประมงคนนั้น
+      if (__DEV__) console.log('🔍 Filtering for researcher selected fisher:', selectedFisher.id);
+      return fishingHistory.filter(entry => {
+        // ตรวจสอบทั้ง fisherInfo.id และ userId เพื่อรองรับข้อมูลเก่า
+        return entry.fisherInfo?.id === selectedFisher.id ||
+               entry.userId === selectedFisher.id;
+      });
+    } else if (!isResearcher) {
+      // ชาวประมงล็อกอินเอง → แสดงเฉพาะข้อมูลของตัวเอง
+      if (__DEV__) console.log('🔍 Filtering for fisher:', user.id);
+      return fishingHistory.filter(entry => {
+        return entry.fisherInfo?.id === user.id ||
+               entry.userId === user.id;
+      });
+    }
+    // นักวิจัยยังไม่เลือกชาวประมง → ไม่แสดงข้อมูล
+    if (__DEV__) console.log('⚠️ Researcher has not selected a fisher');
+    return [];
+  };
+
+  const filteredHistory = getFilteredHistory();
 
   const handleLogout = () => {
     Alert.alert(
@@ -58,7 +110,43 @@ export default function HomeScreen({ navigation }) {
 
 
   const getRecentEntries = () => {
-    return fishingHistory.slice(0, 3);
+    // Sort by date (newest first) then take first 3
+    return [...filteredHistory]
+      .sort((a, b) => {
+        const dateA = getDateValue(a.date);
+        const dateB = getDateValue(b.date);
+        return dateB - dateA; // Descending order (newest first)
+      })
+      .slice(0, 3);
+  };
+
+  // Helper function to convert various date formats to timestamp
+  const getDateValue = (dateValue) => {
+    try {
+      if (!dateValue) return 0;
+
+      // Handle Firestore Timestamp object
+      if (dateValue && typeof dateValue === 'object' && dateValue.seconds) {
+        return dateValue.seconds * 1000;
+      }
+      // Handle Date object
+      if (dateValue instanceof Date) {
+        return dateValue.getTime();
+      }
+      // Handle string or number
+      if (typeof dateValue === 'string' || typeof dateValue === 'number') {
+        return new Date(dateValue).getTime();
+      }
+      // Handle Firestore Timestamp with toDate() method
+      if (dateValue && typeof dateValue.toDate === 'function') {
+        return dateValue.toDate().getTime();
+      }
+
+      return 0;
+    } catch (error) {
+      console.error('Error getting date value:', error);
+      return 0;
+    }
   };
 
   // Helper function to safely format date
@@ -84,15 +172,15 @@ export default function HomeScreen({ navigation }) {
       // Handle Firestore Timestamp with toDate() method
       else if (dateValue && typeof dateValue.toDate === 'function') {
         date = dateValue.toDate();
-      } 
+      }
       else {
-        console.log('Unknown date format:', dateValue);
+        if (__DEV__) console.log('Unknown date format:', dateValue);
         return 'ไม่ระบุวันที่';
       }
-      
+
       // Check if date is valid
       if (isNaN(date.getTime())) {
-        console.log('Invalid date:', dateValue);
+        if (__DEV__) console.log('Invalid date:', dateValue);
         return 'ไม่ระบุวันที่';
       }
       
@@ -122,31 +210,43 @@ export default function HomeScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        {/* Header with user info */}
+        {/* Header with user info and refresh button */}
         <Card style={[styles.card, styles.headerCard]}>
           <Card.Content>
-            <View style={styles.userInfo}>
-              <Text variant="headlineSmall" style={styles.welcomeText}>
-                ยินดีต้อนรับ
-              </Text>
-              <Text variant="titleLarge" style={styles.userName}>
-                {getUserDisplayName()}
-              </Text>
-              {user?.role && (
-                <Text variant="bodyMedium" style={styles.userDetails}>
-                  🏷️ {user.role === 'researcher' ? 'นักวิจัย' : 'ชาวประมง'}
+            <View style={styles.headerWithRefresh}>
+              <View style={styles.userInfo}>
+                <Text variant="headlineSmall" style={styles.welcomeText}>
+                  ยินดีต้อนรับ
                 </Text>
-              )}
-              {user?.village && (
-                <Text variant="bodyMedium" style={styles.userDetails}>
-                  🏠 {user.village}, {user.district}, {user.province}
+                <Text variant="titleLarge" style={styles.userName}>
+                  {getUserDisplayName()}
                 </Text>
-              )}
-              {user?.occupation && (
-                <Text variant="bodyMedium" style={styles.userDetails}>
-                  👨‍🌾 {user.occupation} {user.experience && `(ประสบการณ์ ${user.experience})`}
-                </Text>
-              )}
+                {user?.role && (
+                  <Text variant="bodyMedium" style={styles.userDetails}>
+                    🏷️ {user.role === 'researcher' ? 'นักวิจัย' : 'ชาวประมง'}
+                  </Text>
+                )}
+                {user?.village && (
+                  <Text variant="bodyMedium" style={styles.userDetails}>
+                    🏠 {user.village}, {user.district}, {user.province}
+                  </Text>
+                )}
+                {user?.occupation && (
+                  <Text variant="bodyMedium" style={styles.userDetails}>
+                    👨‍🌾 {user.occupation} {user.experience && `(ประสบการณ์ ${user.experience})`}
+                  </Text>
+                )}
+              </View>
+              <IconButton
+                icon="refresh"
+                mode="contained"
+                iconColor="#2196F3"
+                size={28}
+                onPress={handleRefresh}
+                disabled={isRefreshing}
+                animated
+                style={styles.refreshButton}
+              />
             </View>
           </Card.Content>
         </Card>
@@ -236,7 +336,7 @@ export default function HomeScreen({ navigation }) {
                   จำนวนครั้งที่บันทึก
                 </Text>
                 <Text variant="bodyMedium" style={styles.statValue}>
-                  {fishingHistory.length > 0 ? `${fishingHistory.length} ครั้ง` : '- ครั้ง'}
+                  {filteredHistory.length > 0 ? `${filteredHistory.length} ครั้ง` : '- ครั้ง'}
                 </Text>
               </View>
 
@@ -245,8 +345,8 @@ export default function HomeScreen({ navigation }) {
                   จำนวนชนิดปลา
                 </Text>
                 <Text variant="bodyMedium" style={styles.statValue}>
-                  {fishingHistory.length > 0
-                    ? `${fishingHistory.reduce((total, entry) => total + (entry.fishList?.length || 0), 0)} ชนิด`
+                  {filteredHistory.length > 0
+                    ? `${filteredHistory.reduce((total, entry) => total + (entry.fishList?.length || 0), 0)} ชนิด`
                     : '- ชนิด'}
                 </Text>
               </View>
@@ -256,9 +356,9 @@ export default function HomeScreen({ navigation }) {
                   จำนวนปลาที่จับได้
                 </Text>
                 <Text variant="bodyMedium" style={styles.statValue}>
-                  {fishingHistory.length > 0
-                    ? `${fishingHistory.reduce((total, entry) => {
-                        return total + (entry.fishList?.reduce((sum, fish) => sum + parseInt(fish.count || 0), 0) || 0);
+                  {filteredHistory.length > 0
+                    ? `${filteredHistory.reduce((total, entry) => {
+                        return total + (entry.fishList?.reduce((sum, fish) => sum + (parseInt(fish.count, 10) || 0), 0) || 0);
                       }, 0)} ตัว`
                     : '- ตัว'}
                 </Text>
@@ -269,8 +369,8 @@ export default function HomeScreen({ navigation }) {
                   น้ำหนักรวม
                 </Text>
                 <Text variant="bodyMedium" style={styles.statValue}>
-                  {fishingHistory.length > 0
-                    ? `${fishingHistory.reduce((total, entry) => total + parseFloat(entry.totalWeight || 0), 0).toFixed(2)} กก.`
+                  {filteredHistory.length > 0
+                    ? `${filteredHistory.reduce((total, entry) => total + (parseFloat(entry.totalWeight) || 0), 0).toFixed(2)} กก.`
                     : '- กก.'}
                 </Text>
               </View>
@@ -328,7 +428,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* Recent Entries Summary */}
-        {fishingHistory.length > 0 && (
+        {filteredHistory.length > 0 && (
           <Card style={styles.card}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>
@@ -340,8 +440,8 @@ export default function HomeScreen({ navigation }) {
                     {formatDate(entry.date)}
                   </Text>
                   <Text variant="bodySmall" style={styles.recentEntryDetail}>
-                    {entry.noFishing 
-                      ? 'ไม่ได้จับปลา' 
+                    {entry.noFishing
+                      ? 'ไม่ได้จับปลา'
                       : `จับปลาได้ ${entry.fishList?.length || 0} ชนิด (${entry.totalWeight || '0'} กก.)`
                     }
                   </Text>
@@ -426,8 +526,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     elevation: 4,
   },
-  userInfo: {
+  headerWithRefresh: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  userInfo: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  refreshButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
   },
   welcomeText: {
     color: '#2196F3',

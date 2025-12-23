@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "tracking-fish",
     slug: "tracking-fish",
-    version: "1.0.0",
+    version: "1.0.2",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
@@ -12,19 +12,22 @@ export default {
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#2F5BA8"
     },
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.trackingfish.app",
+      buildNumber: "1",
       infoPlist: {
         NSLocationWhenInUseUsageDescription: "แอปต้องการเข้าถึงตำแหน่งเพื่อแสดงแผนที่และบันทึกพิกัดการจับปลา"
       }
     },
     android: {
+      package: "com.trackingfish.app",
+      versionCode: 4,
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#2F5BA8"
       },
       edgeToEdgeEnabled: true,
       permissions: [
@@ -33,7 +36,7 @@ export default {
       ],
       config: {
         googleMaps: {
-          apiKey: "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+          apiKey: process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY_HERE"
         }
       }
     },
@@ -44,11 +47,20 @@ export default {
       [
         "react-native-maps",
         {
-          googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+          googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY_HERE"
         }
       ]
     ],
+    updates: {
+      url: "https://u.expo.dev/0e948af1-af3e-4ff3-ab61-37614abd6402"
+    },
+    runtimeVersion: {
+      policy: "appVersion"
+    },
     extra: {
+      eas: {
+        projectId: "0e948af1-af3e-4ff3-ab61-37614abd6402"
+      },
       firebaseApiKey: process.env.FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
       firebaseProjectId: process.env.FIREBASE_PROJECT_ID,

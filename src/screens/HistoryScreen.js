@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { 
-  Button, 
-  Card, 
-  Text, 
+import {
+  Button,
+  Card,
+  Text,
   List,
   Searchbar,
   Chip,
@@ -14,6 +14,7 @@ import {
   Dialog
 } from 'react-native-paper';
 import { useFishingData } from '../contexts/FishingDataContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const WATER_SOURCE_LABELS = {
   'mekong': 'แม่น้ำโขง',
@@ -23,13 +24,59 @@ const WATER_SOURCE_LABELS = {
 };
 
 export default function HistoryScreen({ navigation }) {
-  const { fishingHistory } = useFishingData();
-  
+  const { fishingHistory, syncWithFirebase } = useFishingData();
+  const { user, selectedFisher, isResearcher } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Filter fishing history based on selected fisher or current user
+  const getFilteredByUser = () => {
+    // ตรวจสอบว่า user มีข้อมูลหรือไม่
+    if (!user || !user.id) {
+      return [];
+    }
+
+    if (isResearcher && selectedFisher) {
+      // นักวิจัยเลือกชาวประมง → แสดงข้อมูลของชาวประมงคนนั้น
+      return fishingHistory.filter(entry => {
+        return entry.fisherInfo?.id === selectedFisher.id ||
+               entry.userId === selectedFisher.id;
+      });
+    } else if (!isResearcher) {
+      // ชาวประมงล็อกอินเอง → แสดงเฉพาะข้อมูลของตัวเอง
+      return fishingHistory.filter(entry => {
+        return entry.fisherInfo?.id === user.id ||
+               entry.userId === user.id;
+      });
+    }
+    // นักวิจัยยังไม่เลือกชาวประมง → ไม่แสดงข้อมูล
+    return [];
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [sortBy, setSortBy] = useState('date'); // date, fishCount, weight
   const [showSortMenu, setShowSortMenu] = useState(false);
+
+  // ฟังก์ชันสำหรับกดปุ่ม refresh
+  const handleRefresh = async () => {
+    if (isRefreshing) return; // ป้องกันการกด refresh ซ้ำ
+
+    setIsRefreshing(true);
+    if (__DEV__) console.log('🔄 HistoryScreen: Manual refresh triggered...');
+
+    try {
+      if (syncWithFirebase) {
+        await syncWithFirebase();
+      }
+    } catch (error) {
+      console.error('Error refreshing:', error);
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 1000);
+    }
+  };
 
   // Disable back button functionality
   useFocusEffect(
@@ -90,71 +137,28 @@ export default function HistoryScreen({ navigation }) {
     }
   };
 
-  const formatTime = (timeValue) => {
-    try {
-      if (!timeValue) return '-';
-      
-      let date;
-      
-      // Handle Firestore Timestamp object
-      if (timeValue && typeof timeValue === 'object' && timeValue.seconds && timeValue.nanoseconds) {
-        date = new Date(timeValue.seconds * 1000 + timeValue.nanoseconds / 1000000);
-      } 
-      // Handle regular Date object
-      else if (timeValue instanceof Date) {
-        date = timeValue;
-      } 
-      // Handle string or number
-      else if (typeof timeValue === 'string' || typeof timeValue === 'number') {
-        date = new Date(timeValue);
-      } 
-      // Handle Firestore Timestamp with toDate() method
-      else if (timeValue && typeof timeValue.toDate === 'function') {
-        date = timeValue.toDate();
-      } 
-      else {
-        console.log('Unknown time format:', timeValue);
-        return '-';
-      }
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        console.log('Invalid time:', timeValue);
-        return '-';
-      }
-      
-      return date.toLocaleTimeString('th-TH', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      });
-    } catch (error) {
-      console.error('Error formatting time:', error, timeValue);
-      return '-';
-    }
-  };
-
   const getTotalCount = (entry) => {
-    return entry.fishList.reduce((total, fish) => total + parseInt(fish.count || 0), 0);
+    return entry.fishList.reduce((total, fish) => total + (parseInt(fish.count, 10) || 0), 0);
   };
 
   const getTotalWeight = (entry) => {
-    return entry.fishList.reduce((total, fish) => total + parseFloat(fish.weight || 0), 0).toFixed(2);
+    return entry.fishList.reduce((total, fish) => total + (parseFloat(fish.weight) || 0), 0).toFixed(2);
   };
 
   const getTotalValue = (entry) => {
-    return entry.fishList.reduce((total, fish) => total + parseFloat(fish.price || 0), 0).toFixed(2);
+    return entry.fishList.reduce((total, fish) => total + (parseFloat(fish.price) || 0), 0).toFixed(2);
   };
 
   const getFilteredAndSortedHistory = () => {
-    let filtered = fishingHistory;
+    // เริ่มจาก filter ตาม user ก่อน
+    let filtered = getFilteredByUser();
 
     // Filter by search query
     if (searchQuery) {
-      filtered = fishingHistory.filter(entry => {
+      filtered = filtered.filter(entry => {
         const searchLower = searchQuery.toLowerCase();
         const dateMatch = formatDate(entry.date).toLowerCase().includes(searchLower);
-        const fishMatch = entry.fishList.some(fish => 
+        const fishMatch = entry.fishList.some(fish =>
           fish.name.toLowerCase().includes(searchLower)
         );
         return dateMatch || fishMatch;
@@ -200,8 +204,11 @@ export default function HistoryScreen({ navigation }) {
 
   const getMonthlyStats = () => {
     const monthlyData = {};
-    
-    fishingHistory.forEach(entry => {
+
+    // ใช้ข้อมูลที่ filter ตาม user แล้ว
+    const userHistory = getFilteredByUser();
+
+    userHistory.forEach(entry => {
       // Safe date conversion for Firestore Timestamp
       let date;
       try {
@@ -262,14 +269,21 @@ export default function HistoryScreen({ navigation }) {
   const filteredHistory = getFilteredAndSortedHistory();
   const monthlyStats = getMonthlyStats();
 
-  if (fishingHistory.length === 0) {
+  // ตรวจสอบจากข้อมูลที่ filter ตาม user แล้ว
+  const userHistory = getFilteredByUser();
+
+  if (userHistory.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Text variant="headlineSmall" style={styles.emptyTitle}>
-          ยังไม่มีประวัติการจับปลา
+          {isResearcher && !selectedFisher
+            ? 'กรุณาเลือกชาวประมงก่อน'
+            : 'ยังไม่มีประวัติการจับปลา'}
         </Text>
         <Text variant="bodyLarge" style={styles.emptySubtitle}>
-          เริ่มบันทึกการจับปลาเพื่อดูประวัติที่นี่
+          {isResearcher && !selectedFisher
+            ? 'กลับไปหน้าหลักเพื่อเลือกชาวประมง'
+            : 'เริ่มบันทึกการจับปลาเพื่อดูประวัติที่นี่'}
         </Text>
         <Button
           mode="contained"
@@ -287,7 +301,7 @@ export default function HistoryScreen({ navigation }) {
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.content}>
-          {/* Search and Sort */}
+          {/* Search and Sort with Refresh */}
           <View style={styles.headerContainer}>
             <Searchbar
               placeholder="ค้นหาตามวันที่หรือชื่อปลา"
@@ -295,34 +309,44 @@ export default function HistoryScreen({ navigation }) {
               value={searchQuery}
               style={styles.searchBar}
             />
-            
-            <Menu
-              visible={showSortMenu}
-              onDismiss={() => setShowSortMenu(false)}
-              anchor={
-                <IconButton
-                  icon="sort"
-                  size={24}
-                  onPress={toggleSortMenu}
+
+            <View style={styles.actionButtons}>
+              <IconButton
+                icon="refresh"
+                mode="contained"
+                size={24}
+                onPress={handleRefresh}
+                disabled={isRefreshing}
+                animated
+              />
+              <Menu
+                visible={showSortMenu}
+                onDismiss={() => setShowSortMenu(false)}
+                anchor={
+                  <IconButton
+                    icon="sort"
+                    size={24}
+                    onPress={toggleSortMenu}
+                  />
+                }
+              >
+                <Menu.Item
+                  onPress={() => handleSortSelect('date')}
+                  title="เรียงตามวันที่"
+                  leadingIcon={sortBy === 'date' ? 'check' : ''}
                 />
-              }
-            >
-              <Menu.Item
-                onPress={() => handleSortSelect('date')}
-                title="เรียงตามวันที่"
-                leadingIcon={sortBy === 'date' ? 'check' : ''}
-              />
-              <Menu.Item
-                onPress={() => handleSortSelect('fishCount')}
-                title="เรียงตามจำนวนปลา"
-                leadingIcon={sortBy === 'fishCount' ? 'check' : ''}
-              />
-              <Menu.Item
-                onPress={() => handleSortSelect('weight')}
-                title="เรียงตามน้ำหนัก"
-                leadingIcon={sortBy === 'weight' ? 'check' : ''}
-              />
-            </Menu>
+                <Menu.Item
+                  onPress={() => handleSortSelect('fishCount')}
+                  title="เรียงตามจำนวนปลา"
+                  leadingIcon={sortBy === 'fishCount' ? 'check' : ''}
+                />
+                <Menu.Item
+                  onPress={() => handleSortSelect('weight')}
+                  title="เรียงตามน้ำหนัก"
+                  leadingIcon={sortBy === 'weight' ? 'check' : ''}
+                />
+              </Menu>
+            </View>
           </View>
 
           {/* Monthly Statistics */}
@@ -417,20 +441,18 @@ export default function HistoryScreen({ navigation }) {
               )}
             </Card.Content>
           </Card>
+
+          {/* Home Button */}
+          <Button
+            mode="outlined"
+            onPress={() => navigation.navigate('Home')}
+            style={styles.homeButton}
+            icon="home"
+          >
+            หน้าแรก
+          </Button>
         </View>
       </ScrollView>
-
-      {/* Home Button */}
-      <View style={styles.homeButtonContainer}>
-        <Button
-          mode="outlined"
-          onPress={() => navigation.navigate('Home')}
-          style={styles.homeButton}
-          icon="home"
-        >
-          หน้าแรก
-        </Button>
-      </View>
 
       {/* Detail Dialog */}
       <Portal>
@@ -462,15 +484,58 @@ export default function HistoryScreen({ navigation }) {
                           แหล่งน้ำ: {selectedEntry.waterSource || '-'}
                         </Text>
                         <Text variant="bodyMedium">
-                          ระดับน้ำ: {selectedEntry.waterLevel || '-'}
-                        </Text>
-                        <Text variant="bodyMedium">
                           สภาพอากาศ: {selectedEntry.weather || '-'}
                         </Text>
-                        <Text variant="bodyMedium">
-                          เวลา: {formatTime(selectedEntry.startTime)} - {formatTime(selectedEntry.endTime)}
-                        </Text>
                       </View>
+
+                      {selectedEntry.fishingGear && (
+                        <View style={styles.dialogSection}>
+                          <Text variant="titleSmall" style={styles.dialogSectionTitle}>
+                            อุปกรณ์จับปลา
+                          </Text>
+                          {(() => {
+                            // Handle both object and array format
+                            const gears = Array.isArray(selectedEntry.fishingGear)
+                              ? selectedEntry.fishingGear
+                              : [selectedEntry.fishingGear];
+
+                            return gears.map((gear, index) => {
+                              if (!gear || !gear.name) return null;
+
+                              // Format details
+                              let detailsText = '';
+                              if (gear.details) {
+                                if (typeof gear.details === 'string') {
+                                  detailsText = gear.details;
+                                } else if (typeof gear.details === 'object') {
+                                  // Convert details object to readable string
+                                  const detailParts = [];
+                                  if (gear.details.quantity) detailParts.push(`จำนวน: ${gear.details.quantity}`);
+                                  if (gear.details.size) detailParts.push(`ขนาด: ${gear.details.size}`);
+                                  if (gear.details.meshSize) detailParts.push(`ขนาดตา: ${gear.details.meshSize}`);
+                                  if (gear.details.length) detailParts.push(`ความยาว: ${gear.details.length}`);
+                                  if (gear.details.depth) detailParts.push(`ความลึก: ${gear.details.depth}`);
+                                  if (gear.details.custom) detailParts.push(gear.details.custom);
+                                  detailsText = detailParts.join(' | ');
+                                }
+                              }
+
+                              return (
+                                <View key={index} style={styles.gearItem}>
+                                  <Text variant="bodyMedium" style={styles.gearName}>
+                                    • {gear.name}
+                                  </Text>
+                                  {detailsText && (
+                                    <Text variant="bodySmall" style={styles.gearDetails}>
+                                      {detailsText}
+                                    </Text>
+                                  )}
+                                </View>
+                              );
+                            });
+                          })()}
+                        </View>
+                      )}
 
                       {selectedEntry.fishList.length > 0 && (
                         <View style={styles.dialogSection}>
@@ -526,6 +591,10 @@ const styles = StyleSheet.create({
   searchBar: {
     flex: 1,
     marginRight: 8,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   card: {
     marginBottom: 16,
@@ -612,11 +681,9 @@ const styles = StyleSheet.create({
   emptyButton: {
     paddingHorizontal: 24,
   },
-  homeButtonContainer: {
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
   homeButton: {
+    marginTop: 24,
+    marginBottom: 32,
     borderColor: '#2196F3',
   },
   dialog: {
@@ -653,6 +720,19 @@ const styles = StyleSheet.create({
   fishDetails: {
     color: '#666',
     marginTop: 2,
+  },
+  gearItem: {
+    marginBottom: 8,
+  },
+  gearName: {
+    fontWeight: '500',
+    color: '#333',
+  },
+  gearDetails: {
+    color: '#666',
+    marginTop: 2,
+    marginLeft: 16,
+    fontStyle: 'italic',
   },
   totalSummary: {
     backgroundColor: '#e3f2fd',
