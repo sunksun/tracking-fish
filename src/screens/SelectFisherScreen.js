@@ -82,8 +82,10 @@ export default function SelectFisherScreen({ navigation }) {
       if (__DEV__) console.log('📊 Result:', result);
 
       if (result.success) {
+        console.log('✅ Loaded fishers from Firebase:', result.fishers.length);
+        console.log('📋 Fisher names:', result.fishers.map(f => f.name).join(', '));
+
         if (__DEV__) {
-          console.log('✅ Loaded fishers from Firebase:', result.fishers.length);
           if (result.fishers.length > 0) {
             console.log('🔍 Sample fisher data:', result.fishers[0]);
           }
@@ -93,10 +95,10 @@ export default function SelectFisherScreen({ navigation }) {
         try {
           await AsyncStorage.setItem('fisher_list_cache', JSON.stringify(result.fishers));
           await AsyncStorage.setItem('fisher_list_cache_time', now.toString());
-          if (__DEV__) console.log('💾 Cached fisher list data for 7 days');
+          console.log('💾 Cached fisher list data for 7 days');
         } catch (cacheError) {
           // ถ้า cache ไม่ได้ก็ไม่เป็นไร ยังใช้งานได้ปกติ
-          if (__DEV__) console.error('⚠️ Failed to cache data:', cacheError);
+          console.error('⚠️ Failed to cache data:', cacheError);
         }
 
         setFishers(result.fishers);
@@ -156,9 +158,30 @@ export default function SelectFisherScreen({ navigation }) {
       {/* Header Card */}
       <Card style={styles.headerCard}>
         <Card.Content>
-          <Text variant="titleMedium" style={styles.headerTitle}>
-            เลือกชาวประมงที่ต้องการบันทึกข้อมูล
+          <View style={styles.headerTitleRow}>
+            <Text variant="titleMedium" style={styles.headerTitle}>
+              เลือกชาวประมงที่ต้องการบันทึกข้อมูล
+            </Text>
+            <Button
+              mode="text"
+              compact
+              onPress={async () => {
+                // ล้าง cache และโหลดใหม่
+                await AsyncStorage.removeItem('fisher_list_cache');
+                await AsyncStorage.removeItem('fisher_list_cache_time');
+                loadFishers();
+              }}
+              style={styles.refreshButton}
+            >
+              รีเฟรช
+            </Button>
+          </View>
+
+          <Text variant="bodySmall" style={styles.fisherCount}>
+            พบ {fishers.length} คน
+            {searchQuery && ` (กรอง ${filteredFishers.length} คน)`}
           </Text>
+
           <Text variant="bodyMedium" style={styles.headerSubtitle}>
             คุณกำลังบันทึกในนาม: {user?.name || 'นักวิจัย'}
           </Text>
@@ -273,10 +296,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     elevation: 4,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   headerTitle: {
     fontWeight: 'bold',
     color: '#2196F3',
+    flex: 1,
+  },
+  refreshButton: {
+    marginRight: -8,
+  },
+  fisherCount: {
+    color: '#666',
     marginBottom: 8,
+    fontStyle: 'italic',
   },
   headerSubtitle: {
     color: '#666',

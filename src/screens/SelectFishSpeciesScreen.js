@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Modal, TouchableOpacity, Image, Dimensions } from 'react-native';
 import {
   Button,
   Text,
@@ -7,10 +7,14 @@ import {
   Searchbar,
   ActivityIndicator,
   List,
-  Divider
+  Divider,
+  Avatar,
+  IconButton
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FirebaseService } from '../services/FirebaseService';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function SelectFishSpeciesScreen({ navigation }) {
   const [allFishSpecies, setAllFishSpecies] = useState([]);
@@ -18,6 +22,9 @@ export default function SelectFishSpeciesScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedFish, setSelectedFish] = useState(null);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
+  const [selectedImageName, setSelectedImageName] = useState('');
 
   useEffect(() => {
     loadFishSpecies();
@@ -83,6 +90,19 @@ export default function SelectFishSpeciesScreen({ navigation }) {
       if (result.success) {
         if (__DEV__) {
           console.log('✅ Loaded fish species from Firebase:', result.species.length);
+
+          // Log fish species with images
+          const withImages = result.species.filter(f => f.image_url || f.imageUrl);
+          console.log('📸 Fish with images:', withImages.length);
+
+          if (withImages.length > 0) {
+            console.log('📋 รายการปลาที่มีรูป:');
+            withImages.forEach(f => {
+              const name = f.thai_name || f.local_name || f.scientific_name;
+              console.log(`  - ${name}: ${f.image_url || f.imageUrl}`);
+            });
+          }
+
           if (result.species.length > 0) {
             console.log('🐟 Sample fish:', result.species[0]);
           }
@@ -143,9 +163,32 @@ export default function SelectFishSpeciesScreen({ navigation }) {
       {/* Header Card */}
       <Card style={styles.headerCard}>
         <Card.Content>
-          <Text variant="titleMedium" style={styles.headerTitle}>
-            เลือกชนิดปลา
-          </Text>
+          <View style={styles.headerTitleRow}>
+            <Text variant="titleMedium" style={styles.headerTitle}>
+              เลือกชนิดปลา
+            </Text>
+            <Button
+              mode="text"
+              compact
+              onPress={async () => {
+                try {
+                  // ล้าง cache และโหลดใหม่
+                  console.log('🗑️ Clearing fish species cache...');
+                  await AsyncStorage.removeItem('fish_species_cache');
+                  await AsyncStorage.removeItem('fish_species_cache_time');
+                  console.log('✅ Cache cleared, loading fresh data...');
+                  loadFishSpecies();
+                  Alert.alert('สำเร็จ', 'กำลังโหลดข้อมูลใหม่จาก Firebase...');
+                } catch (error) {
+                  console.error('❌ Error clearing cache:', error);
+                  Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
+                }
+              }}
+              style={styles.refreshButton}
+            >
+              รีเฟรช
+            </Button>
+          </View>
           <Text variant="bodyMedium" style={styles.headerSubtitle}>
             ค้นหาและเลือกชนิดปลาที่ต้องการบันทึก
           </Text>
@@ -186,6 +229,35 @@ export default function SelectFishSpeciesScreen({ navigation }) {
                   <List.Item
                     title={fish.thai_name || fish.local_name || fish.common_name_thai || 'ไม่ระบุชื่อ'}
                     description={getFishDescription(fish)}
+                    left={(props) => (
+                      <TouchableOpacity
+                        style={styles.avatarContainer}
+                        onPress={() => {
+                          if (fish.image_url || fish.imageUrl) {
+                            setSelectedImageUrl(fish.image_url || fish.imageUrl);
+                            setSelectedImageName(fish.thai_name || fish.local_name || fish.common_name_thai || 'ไม่ระบุชื่อ');
+                            setImageModalVisible(true);
+                          }
+                        }}
+                        disabled={!fish.image_url && !fish.imageUrl}
+                      >
+                        {fish.image_url || fish.imageUrl ? (
+                          <Avatar.Image
+                            {...props}
+                            size={50}
+                            source={{ uri: fish.image_url || fish.imageUrl }}
+                            style={styles.fishAvatar}
+                          />
+                        ) : (
+                          <Avatar.Icon
+                            {...props}
+                            size={50}
+                            icon="fish"
+                            style={styles.fishAvatarIcon}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    )}
                     right={(props) => (
                       <Button
                         {...props}
@@ -223,6 +295,55 @@ export default function SelectFishSpeciesScreen({ navigation }) {
           </Button>
         </View>
       </ScrollView>
+
+      {/* Image Modal */}
+      <Modal
+        visible={imageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setImageModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setImageModalVisible(false)}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text variant="titleMedium" style={styles.modalTitle}>
+                  {selectedImageName}
+                </Text>
+                <IconButton
+                  icon="close"
+                  size={24}
+                  onPress={() => setImageModalVisible(false)}
+                  style={styles.closeButton}
+                />
+              </View>
+
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={(e) => e.stopPropagation()}
+              >
+                <Image
+                  source={{ uri: selectedImageUrl }}
+                  style={styles.fullImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+
+              <Button
+                mode="contained"
+                onPress={() => setImageModalVisible(false)}
+                style={styles.closeModalButton}
+              >
+                ปิด
+              </Button>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -247,10 +368,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     elevation: 4,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   headerTitle: {
     fontWeight: 'bold',
     color: '#2196F3',
-    marginBottom: 8,
+    flex: 1,
+  },
+  refreshButton: {
+    marginRight: -8,
   },
   headerSubtitle: {
     color: '#666',
@@ -316,5 +446,57 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 32,
     borderColor: '#2196F3',
+  },
+  avatarContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  fishAvatar: {
+    backgroundColor: '#fff',
+  },
+  fishAvatarIcon: {
+    backgroundColor: '#e3f2fd',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: SCREEN_WIDTH * 0.95,
+    maxHeight: SCREEN_HEIGHT * 0.85,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    flex: 1,
+    fontWeight: 'bold',
+    color: '#2196F3',
+  },
+  closeButton: {
+    margin: 0,
+  },
+  fullImage: {
+    width: SCREEN_WIDTH * 0.85,
+    height: SCREEN_HEIGHT * 0.6,
+    borderRadius: 8,
+  },
+  closeModalButton: {
+    marginTop: 16,
+    width: '100%',
   },
 });

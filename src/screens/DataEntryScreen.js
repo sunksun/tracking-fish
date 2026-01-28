@@ -141,8 +141,10 @@ export default function DataEntryScreen({ navigation }) {
       if (__DEV__) console.log('📊 Result:', result);
 
       if (result.success) {
+        console.log('✅ Loaded fishing spots from Firebase:', result.spots.length);
+        console.log('📋 Spots:', result.spots.map(s => s.spotName).join(', '));
+
         if (__DEV__) {
-          console.log('✅ Loaded fishing spots from Firebase:', result.spots.length);
           if (result.spots.length > 0) {
             console.log('📍 Sample spot:', result.spots[0]);
           }
@@ -152,10 +154,10 @@ export default function DataEntryScreen({ navigation }) {
         try {
           await AsyncStorage.setItem('fishing_spots_cache', JSON.stringify(result.spots));
           await AsyncStorage.setItem('fishing_spots_cache_time', now.toString());
-          if (__DEV__) console.log('💾 Cached fishing spots data for 30 days');
+          console.log('💾 Cached fishing spots data for 30 days');
         } catch (cacheError) {
           // ถ้า cache ไม่ได้ก็ไม่เป็นไร ยังใช้งานได้ปกติ
-          if (__DEV__) console.error('⚠️ Failed to cache data:', cacheError);
+          console.error('⚠️ Failed to cache data:', cacheError);
         }
 
         setFishingSpots(result.spots);
@@ -637,10 +639,37 @@ export default function DataEntryScreen({ navigation }) {
         {/* Location Section */}
         <Card style={styles.card}>
           <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              ตำแหน่งการจับปลา <Text style={{ color: 'red' }}>*</Text>
+            <View style={styles.sectionHeader}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                ตำแหน่งการจับปลา <Text style={{ color: 'red' }}>*</Text>
+              </Text>
+              <Button
+                mode="text"
+                compact
+                onPress={async () => {
+                  try {
+                    // ล้าง cache และโหลดใหม่
+                    console.log('🗑️ Clearing fishing spots cache...');
+                    await AsyncStorage.removeItem('fishing_spots_cache');
+                    await AsyncStorage.removeItem('fishing_spots_cache_time');
+                    console.log('✅ Cache cleared, loading fresh data...');
+                    loadFishingSpots();
+                    Alert.alert('สำเร็จ', 'กำลังโหลดจุดจับปลาใหม่จาก Firebase...');
+                  } catch (error) {
+                    console.error('❌ Error clearing cache:', error);
+                    Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
+                  }
+                }}
+                style={styles.refreshButton}
+              >
+                รีเฟรช
+              </Button>
+            </View>
+
+            <Text variant="bodySmall" style={styles.spotCount}>
+              พบ {fishingSpots.length} จุด
             </Text>
-            
+
             {loadingSpots ? (
               <View style={styles.locationSection}>
                 <Text variant="bodyMedium" style={styles.locationDescription}>
@@ -665,7 +694,7 @@ export default function DataEntryScreen({ navigation }) {
                     </Chip>
                   ))}
                 </View>
-                
+
                 {selectedSpot && (
                   <View style={styles.selectedSpotInfo}>
                     {/* แสดงพิกัดปัจจุบัน */}
@@ -856,7 +885,6 @@ export default function DataEntryScreen({ navigation }) {
                       label="ขนาดตา (ซม.)"
                       value={gearDetails.meshSize}
                       onChangeText={(value) => setGearDetails({...gearDetails, meshSize: value})}
-                      keyboardType="numeric"
                       mode="outlined"
                       style={styles.modalInput}
                       placeholder="เช่น 4, 12, 14"
@@ -865,7 +893,6 @@ export default function DataEntryScreen({ navigation }) {
                       label="ความยาว (ม.)"
                       value={gearDetails.length}
                       onChangeText={(value) => setGearDetails({...gearDetails, length: value})}
-                      keyboardType="numeric"
                       mode="outlined"
                       style={styles.modalInput}
                       placeholder="เช่น 280, 300, 600"
@@ -874,7 +901,6 @@ export default function DataEntryScreen({ navigation }) {
                       label="ความลึก (ม.)"
                       value={gearDetails.depth}
                       onChangeText={(value) => setGearDetails({...gearDetails, depth: value})}
-                      keyboardType="numeric"
                       mode="outlined"
                       style={styles.modalInput}
                       placeholder="เช่น 1.74, 0.94"
@@ -883,7 +909,6 @@ export default function DataEntryScreen({ navigation }) {
                       label="จำนวน (ผืน)"
                       value={gearDetails.quantity}
                       onChangeText={(value) => setGearDetails({...gearDetails, quantity: value})}
-                      keyboardType="numeric"
                       mode="outlined"
                       style={styles.modalInput}
                     />
@@ -902,7 +927,6 @@ export default function DataEntryScreen({ navigation }) {
                       label="จำนวน (เต้า)"
                       value={gearDetails.quantity}
                       onChangeText={(value) => setGearDetails({...gearDetails, quantity: value})}
-                      keyboardType="numeric"
                       mode="outlined"
                       style={styles.modalInput}
                     />
@@ -921,7 +945,6 @@ export default function DataEntryScreen({ navigation }) {
                       label="จำนวน"
                       value={gearDetails.quantity}
                       onChangeText={(value) => setGearDetails({...gearDetails, quantity: value})}
-                      keyboardType="numeric"
                       mode="outlined"
                       style={styles.modalInput}
                     />
@@ -931,7 +954,6 @@ export default function DataEntryScreen({ navigation }) {
                     label="จำนวน"
                     value={gearDetails.quantity}
                     onChangeText={(value) => setGearDetails({...gearDetails, quantity: value})}
-                    keyboardType="numeric"
                     mode="outlined"
                     style={styles.modalInput}
                   />
@@ -1297,5 +1319,19 @@ const styles = StyleSheet.create({
   },
   mapConfirmButton: {
     flex: 1,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  refreshButton: {
+    marginRight: -8,
+  },
+  spotCount: {
+    color: '#666',
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
 });

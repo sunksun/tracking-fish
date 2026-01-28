@@ -8,7 +8,7 @@ export default {
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
-    newArchEnabled: true,
+    newArchEnabled: false,
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
@@ -17,9 +17,12 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.trackingfish.app",
-      buildNumber: "1",
+      buildNumber: "6",
       infoPlist: {
-        NSLocationWhenInUseUsageDescription: "แอปต้องการเข้าถึงตำแหน่งเพื่อแสดงแผนที่และบันทึกพิกัดการจับปลา"
+        NSLocationWhenInUseUsageDescription: "แอปต้องการเข้าถึงตำแหน่งเพื่อแสดงแผนที่และบันทึกพิกัดการจับปลา เพื่อใช้ในการวิจัยและอนุรักษ์ทรัพยากรประมงแม่น้ำโขง",
+        NSCameraUsageDescription: "แอปต้องการเข้าถึงกล้องเพื่อถ่ายรูปปลาที่จับได้ รูปภาพจะถูกบันทึกพร้อมกับข้อมูลการจับปลา เช่น ชนิดปลา น้ำหนัก และความยาว เพื่อใช้ในการบันทึกและวิเคราะห์ข้อมูลทางวิทยาศาสตร์",
+        NSPhotoLibraryUsageDescription: "แอปต้องการเข้าถึงคลังรูปภาพเพื่อให้คุณสามารถเลือกรูปปลาที่จับได้จากคลังรูปภาพของคุณ รูปภาพจะถูกแนบกับบันทึกการจับปลาเพื่อการอ้างอิงและวิเคราะห์ข้อมูล",
+        NSPhotoLibraryAddUsageDescription: "แอปต้องการบันทึกรูปภาพปลาลงในคลังรูปภาพของคุณ เพื่อให้คุณสามารถเก็บรูปภาพไว้ใช้ภายหลังได้"
       }
     },
     android: {
@@ -45,9 +48,11 @@ export default {
     },
     plugins: [
       [
-        "react-native-maps",
+        "expo-build-properties",
         {
-          googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+          ios: {
+            useFrameworks: "static"
+          }
         }
       ]
     ],
