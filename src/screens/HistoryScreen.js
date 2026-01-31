@@ -95,41 +95,41 @@ export default function HistoryScreen({ navigation }) {
   const formatDate = (dateValue) => {
     try {
       if (!dateValue) return 'ไม่ระบุวันที่';
-      
+
       let date;
-      
+
       // Handle Firestore Timestamp object
       if (dateValue && typeof dateValue === 'object' && dateValue.seconds && dateValue.nanoseconds) {
         date = new Date(dateValue.seconds * 1000 + dateValue.nanoseconds / 1000000);
-      } 
+      }
       else if (dateValue instanceof Date) {
         date = dateValue;
-      } 
+      }
       else if (typeof dateValue === 'string' || typeof dateValue === 'number') {
         date = new Date(dateValue);
-      } 
+      }
       else if (dateValue && typeof dateValue.toDate === 'function') {
         date = dateValue.toDate();
-      } 
+      }
       else {
         return 'ไม่ระบุวันที่';
       }
-      
+
       if (isNaN(date.getTime())) {
         return 'ไม่ระบุวันที่';
       }
-      
+
       // Format Thai date with Thai month names (full names)
       const thaiMonths = [
-        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 
+        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน',
         'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม',
         'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
       ];
-      
+
       const day = date.getDate();
       const month = thaiMonths[date.getMonth()];
       const year = date.getFullYear() + 543;
-      
+
       return `${day} ${month} ${year}`;
     } catch (error) {
       console.error('Error formatting date in History:', error, dateValue);
@@ -137,15 +137,67 @@ export default function HistoryScreen({ navigation }) {
     }
   };
 
+  const formatDateTimeWithCreatedAt = (entry) => {
+    try {
+      // ลำดับความสำคัญ: ใช้ createdAt ก่อน (เพราะมีเวลาที่แม่นยำ) ถ้าไม่มีค่อยใช้ date
+      const dateValue = entry.createdAt || entry.date;
+      if (!dateValue) return 'ไม่ระบุวันที่';
+
+      let date;
+
+      // Handle Firestore Timestamp object
+      if (dateValue && typeof dateValue === 'object' && dateValue.seconds && dateValue.nanoseconds) {
+        date = new Date(dateValue.seconds * 1000 + dateValue.nanoseconds / 1000000);
+      }
+      else if (dateValue instanceof Date) {
+        date = dateValue;
+      }
+      else if (typeof dateValue === 'string' || typeof dateValue === 'number') {
+        date = new Date(dateValue);
+      }
+      else if (dateValue && typeof dateValue.toDate === 'function') {
+        date = dateValue.toDate();
+      }
+      else {
+        return 'ไม่ระบุวันที่';
+      }
+
+      if (isNaN(date.getTime())) {
+        return 'ไม่ระบุวันที่';
+      }
+
+      // Format Thai date with time
+      const thaiMonths = [
+        'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.',
+        'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.',
+        'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+      ];
+
+      const day = date.getDate();
+      const month = thaiMonths[date.getMonth()];
+      const year = date.getFullYear() + 543;
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+
+      return `${day} ${month} ${year} ${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error formatting datetime:', error);
+      return 'ไม่ระบุวันที่';
+    }
+  };
+
   const getTotalCount = (entry) => {
+    if (!entry?.fishList || !Array.isArray(entry.fishList)) return 0;
     return entry.fishList.reduce((total, fish) => total + (parseInt(fish.count, 10) || 0), 0);
   };
 
   const getTotalWeight = (entry) => {
+    if (!entry?.fishList || !Array.isArray(entry.fishList)) return '0.00';
     return entry.fishList.reduce((total, fish) => total + (parseFloat(fish.weight) || 0), 0).toFixed(2);
   };
 
   const getTotalValue = (entry) => {
+    if (!entry?.fishList || !Array.isArray(entry.fishList)) return '0.00';
     return entry.fishList.reduce((total, fish) => total + (parseFloat(fish.price) || 0), 0).toFixed(2);
   };
 
@@ -411,15 +463,15 @@ export default function HistoryScreen({ navigation }) {
               {filteredHistory.map((entry) => (
                 <List.Item
                   key={entry.id}
-                  title={formatDate(entry.date)}
+                  title={formatDateTimeWithCreatedAt(entry)}
                   description={
-                    entry.noFishing 
+                    entry.noFishing
                       ? 'ไม่ได้จับปลา'
                       : `${entry.fishList.length} ชนิด | ${getTotalCount(entry)} ตัว | ${getTotalWeight(entry)} กก.`
                   }
-                  left={() => 
-                    <List.Icon 
-                      icon={entry.noFishing ? 'cancel' : 'fish'} 
+                  left={() =>
+                    <List.Icon
+                      icon={entry.noFishing ? 'cancel' : 'fish'}
                       color={entry.noFishing ? '#f44336' : '#4caf50'}
                     />
                   }

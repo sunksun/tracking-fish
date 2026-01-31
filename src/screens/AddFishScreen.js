@@ -18,6 +18,8 @@ export default function AddFishScreen({ navigation, route }) {
 
   const [fishForm, setFishForm] = useState({
     name: '',
+    commonName: '',
+    localName: '',
     count: '',
     weight: '',
     minLength: '',
@@ -26,18 +28,26 @@ export default function AddFishScreen({ navigation, route }) {
     photo: null
   });
 
-  // รับชื่อปลาที่เลือกจากหน้า SelectFishSpecies
+  // รับข้อมูลปลาที่เลือกจากหน้า SelectFishSpecies
   useEffect(() => {
-    if (route.params?.selectedFishName) {
-      setFishForm(prev => ({ ...prev, name: route.params.selectedFishName }));
+    if (route.params?.selectedFish) {
+      const fish = route.params.selectedFish;
+      setFishForm(prev => ({
+        ...prev,
+        name: fish.common_name_thai || fish.thai_name || fish.scientific_name,
+        commonName: fish.common_name_thai || fish.thai_name || fish.scientific_name,
+        localName: fish.local_name || fish.common_name_thai || fish.thai_name
+      }));
       // ล้าง params หลังจากใช้แล้ว
-      navigation.setParams({ selectedFishName: undefined });
+      navigation.setParams({ selectedFish: undefined });
     }
-  }, [route.params?.selectedFishName, navigation]);
+  }, [route.params?.selectedFish, navigation]);
 
   const resetForm = () => {
     setFishForm({
       name: '',
+      commonName: '',
+      localName: '',
       count: '',
       weight: '',
       minLength: '',
@@ -204,14 +214,17 @@ export default function AddFishScreen({ navigation, route }) {
   };
 
   const getTotalCount = () => {
+    if (!currentEntry?.fishList || !Array.isArray(currentEntry.fishList)) return 0;
     return currentEntry.fishList.reduce((total, fish) => total + (parseInt(fish.count, 10) || 0), 0);
   };
 
   const getTotalWeight = () => {
+    if (!currentEntry?.fishList || !Array.isArray(currentEntry.fishList)) return '0.00';
     return currentEntry.fishList.reduce((total, fish) => total + (parseFloat(fish.weight) || 0), 0).toFixed(2);
   };
 
   const getTotalValue = () => {
+    if (!currentEntry?.fishList || !Array.isArray(currentEntry.fishList)) return '0.00';
     return currentEntry.fishList.reduce((total, fish) => total + (parseFloat(fish.price) || 0), 0).toFixed(2);
   };
 
@@ -244,16 +257,23 @@ export default function AddFishScreen({ navigation, route }) {
               </Text>
 
               {/* Select Fish Species Button */}
-              {fishForm.name ? (
+              {fishForm.commonName ? (
                 <View style={styles.selectedFishInfo}>
                   <View style={styles.selectedFishRow}>
                     <View style={styles.selectedFishTextContainer}>
-                      <Text variant="bodyMedium" style={styles.selectedFishLabel}>
-                        ชนิดปลาที่เลือก:
-                      </Text>
                       <Text variant="titleMedium" style={styles.selectedFishName}>
-                        {fishForm.name}
+                        {fishForm.commonName}
                       </Text>
+                      {fishForm.localName && fishForm.localName !== fishForm.commonName && (
+                        <>
+                          <Text variant="bodySmall" style={styles.localNameLabel}>
+                            ชื่อท้องถิ่น:
+                          </Text>
+                          <Text variant="bodyMedium" style={styles.localNameText}>
+                            {fishForm.localName}
+                          </Text>
+                        </>
+                      )}
                     </View>
                     <Button
                       mode="outlined"
@@ -512,6 +532,16 @@ const styles = StyleSheet.create({
   selectedFishName: {
     fontWeight: 'bold',
     color: '#1976d2',
+  },
+  localNameLabel: {
+    color: '#666',
+    marginTop: 8,
+    marginBottom: 2,
+    fontSize: 12,
+  },
+  localNameText: {
+    color: '#333',
+    fontStyle: 'italic',
   },
   changeButton: {
     borderColor: '#2196F3',

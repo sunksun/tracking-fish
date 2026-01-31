@@ -335,7 +335,10 @@ export default function DataEntryScreen({ navigation }) {
     console.log('handleDateChange called:', event, selectedDate);
     setShowDatePicker(false);
     if (selectedDate) {
-      setLocalData({ ...localData, date: selectedDate });
+      // แก้ปัญหา timezone: ใช้ setHours เพื่อกำหนดเวลาเป็นเที่ยงวันเพื่อหลีกเลี่ยงปัญหา timezone offset
+      const normalizedDate = new Date(selectedDate);
+      normalizedDate.setHours(12, 0, 0, 0);
+      setLocalData({ ...localData, date: normalizedDate });
     }
   };
 
@@ -396,7 +399,7 @@ export default function DataEntryScreen({ navigation }) {
       return;
     }
 
-    if (!localData.fishingGear || !localData.fishingGear.details.quantity) {
+    if (!localData.fishingGear || !localData.fishingGear.details?.quantity) {
       Alert.alert('กรุณาเลือกเครื่องมือ', 'กรุณาเลือกเครื่องมือที่ใช้ในการจับปลาและกรอกรายละเอียด');
       return;
     }

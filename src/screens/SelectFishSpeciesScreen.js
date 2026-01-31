@@ -133,11 +133,14 @@ export default function SelectFishSpeciesScreen({ navigation }) {
   };
 
   const handleSelectFish = (fish) => {
-    const fishName = fish.thai_name || fish.local_name || fish.common_name_thai || fish.scientific_name;
     setSelectedFish(fish);
 
-    // ส่งชื่อปลากลับไปหน้า AddFish ผ่าน navigation params
-    navigation.navigate('AddFish', { selectedFishName: fishName });
+    // ส่งข้อมูลปลาทั้งหมดกลับไปหน้า AddFish
+    navigation.navigate('AddFish', {
+      selectedFish: fish,
+      selectedFishCommonName: fish.common_name_thai || fish.thai_name || fish.scientific_name,
+      selectedFishLocalName: fish.local_name || fish.common_name_thai || fish.thai_name
+    });
   };
 
   const getFishDescription = (fish) => {

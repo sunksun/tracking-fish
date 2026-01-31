@@ -207,7 +207,7 @@ export default function SummaryScreen({ navigation }) {
                 <View style={styles.infoRow}>
                   <Text variant="bodyMedium" style={styles.label}>ผู้บันทึกข้อมูล:</Text>
                   <Text variant="bodyMedium" style={styles.researcherName}>
-                    {user?.name || '-'} (นักวิจัย)
+                    (นักวิจัย)
                   </Text>
                 </View>
               </>
@@ -281,41 +281,6 @@ export default function SummaryScreen({ navigation }) {
           </Card.Content>
         </Card>
 
-        {/* Fishing Gear */}
-        {!currentEntry.noFishing && currentEntry.fishingGear.length > 0 && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                เครื่องมือที่ใช้
-              </Text>
-              {currentEntry.fishingGear.map((gear, index) => (
-                <View key={index} style={styles.gearItem}>
-                  <Text variant="bodyMedium" style={styles.gearName}>
-                    {gear.name}
-                  </Text>
-                  <View style={styles.gearDetails}>
-                    <Text variant="bodySmall" style={styles.gearDetailText}>
-                      จำนวน: {gear.quantity} {gear.name.includes('มอง') ? 'ผืน' : 'เต้า/ชิ้น'}
-                    </Text>
-                    {gear.size && (
-                      <Text variant="bodySmall" style={styles.gearDetailText}>
-                        ขนาด: {gear.size}
-                      </Text>
-                    )}
-                    {gear.custom && (
-                      <Text variant="bodySmall" style={styles.gearDetailText}>
-                        รายละเอียดเพิ่มเติม: {gear.custom}
-                      </Text>
-                    )}
-                  </View>
-                  {index < currentEntry.fishingGear.length - 1 && (
-                    <Divider style={styles.gearDivider} />
-                  )}
-                </View>
-              ))}
-            </Card.Content>
-          </Card>
-        )}
 
         {/* Fish List */}
         {!currentEntry.noFishing && currentEntry.fishList.length > 0 && (

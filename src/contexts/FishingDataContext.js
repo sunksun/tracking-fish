@@ -11,10 +11,10 @@ const initialState = {
     noFishing: false,
     waterSource: '',
     waterLevel: '',
-    weather: [],
-    fishingGear: [],
-    startTime: null,
-    endTime: null,
+    weather: '',
+    fishingGear: null,
+    startTime: '',
+    endTime: '',
     totalWeight: '',
     fishList: [],
     location: null,
@@ -145,7 +145,8 @@ export function FishingDataProvider({ children }) {
     if (isAuthenticated && user) {
       syncWithFirebase();
     }
-  }, [isAuthenticated, user, selectedFisher]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id, selectedFisher?.id]);
 
   const loadStoredData = async () => {
     try {

@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "tracking-fish",
     slug: "tracking-fish",
-    version: "1.0.2",
+    version: "1.0.3",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
@@ -17,7 +17,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.trackingfish.app",
-      buildNumber: "6",
+      buildNumber: "7",
       infoPlist: {
         NSLocationWhenInUseUsageDescription: "แอปต้องการเข้าถึงตำแหน่งเพื่อแสดงแผนที่และบันทึกพิกัดการจับปลา เพื่อใช้ในการวิจัยและอนุรักษ์ทรัพยากรประมงแม่น้ำโขง",
         NSCameraUsageDescription: "แอปต้องการเข้าถึงกล้องเพื่อถ่ายรูปปลาที่จับได้ รูปภาพจะถูกบันทึกพร้อมกับข้อมูลการจับปลา เช่น ชนิดปลา น้ำหนัก และความยาว เพื่อใช้ในการบันทึกและวิเคราะห์ข้อมูลทางวิทยาศาสตร์",
@@ -27,7 +27,7 @@ export default {
     },
     android: {
       package: "com.trackingfish.app",
-      versionCode: 4,
+      versionCode: 8,
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#2F5BA8"
