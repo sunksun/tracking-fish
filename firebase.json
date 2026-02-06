@@ -1,0 +1,11 @@
+{
+  "projects": {
+    "default": "tracking-fish-app"
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "firebase-storage.rules"
+  }
+}

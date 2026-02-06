@@ -8,7 +8,6 @@ export default {
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
-    newArchEnabled: false,
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
@@ -57,10 +56,7 @@ export default {
       ]
     ],
     updates: {
-      url: "https://u.expo.dev/0e948af1-af3e-4ff3-ab61-37614abd6402"
-    },
-    runtimeVersion: {
-      policy: "appVersion"
+      enabled: false
     },
     extra: {
       eas: {

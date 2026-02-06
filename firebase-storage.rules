@@ -1,25 +1,55 @@
 rules_version = '2';
 
 // Firebase Storage Security Rules for Fish Tracking App
+// Updated: 2025-02-05
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow authenticated users to upload and read images in fishing-records directory
-    match /fishing-records/{userId}/{recordId}/{imageFile} {
-      allow read, write: if request.auth != null;
+
+    // Helper functions for validation
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
     }
-    
-    // Allow read access to all images for CDN functionality
-    // This enables public access to image URLs for viewing
-    match /{allPaths=**} {
+
+    function isValidSize() {
+      // Maximum file size: 10MB
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Fishing records photos - รองรับ userId ใน path
+    // Path format: fishing-records/{userId}/{recordId}/fish_{index}_{timestamp}.jpg
+    match /fishing-records/{userId}/{recordId}/{allPaths=**} {
+      // Allow all reads (app uses custom auth, not Firebase Auth)
       allow read: if true;
+
+      // Allow uploads with file validation only
+      // Note: App uses phone-based auth stored in Firestore, not Firebase Auth
+      allow write: if isImage() && isValidSize();
+
+      // Allow all deletes (app handles authorization in Firestore rules)
+      allow delete: if true;
     }
-    
-    // Optional: Restrict file sizes and types
-    // Uncomment and modify as needed
-    // match /fishing-records/{userId}/{recordId}/{imageFile} {
-    //   allow write: if request.auth != null 
-    //                && resource.size < 5 * 1024 * 1024  // 5MB limit
-    //                && request.resource.contentType.matches('image/.*'); // Only images
-    // }
+
+    // Water quality images
+    match /water-quality/{stationId}/{allPaths=**} {
+      // Allow all reads
+      allow read: if true;
+
+      // Allow write with validation
+      allow write: if isImage() && isValidSize();
+    }
+
+    // User profile images
+    match /users/{userId}/{allPaths=**} {
+      // Allow all reads
+      allow read: if true;
+
+      // Allow write with validation
+      allow write: if isImage() && isValidSize();
+    }
+
+    // Deny all other paths by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
   }
 }
