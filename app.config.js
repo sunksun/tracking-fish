@@ -17,6 +17,9 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.trackingfish.app",
       buildNumber: "7",
+      config: {
+        usesNonExemptEncryption: false
+      },
       infoPlist: {
         NSLocationWhenInUseUsageDescription: "แอปต้องการเข้าถึงตำแหน่งเพื่อแสดงแผนที่และบันทึกพิกัดการจับปลา เพื่อใช้ในการวิจัยและอนุรักษ์ทรัพยากรประมงแม่น้ำโขง",
         NSCameraUsageDescription: "แอปต้องการเข้าถึงกล้องเพื่อถ่ายรูปปลาที่จับได้ รูปภาพจะถูกบันทึกพร้อมกับข้อมูลการจับปลา เช่น ชนิดปลา น้ำหนัก และความยาว เพื่อใช้ในการบันทึกและวิเคราะห์ข้อมูลทางวิทยาศาสตร์",

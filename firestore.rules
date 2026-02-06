@@ -70,8 +70,8 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Fish species collection (if exists)
-    match /fishSpecies/{speciesId} {
+    // Fish species collection
+    match /fish_species/{speciesId} {
       // Allow reading all fish species
       allow read: if true;
 
