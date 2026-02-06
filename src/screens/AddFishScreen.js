@@ -28,6 +28,8 @@ export default function AddFishScreen({ navigation, route }) {
     photo: null
   });
 
+  const [unknownFish, setUnknownFish] = useState(false);
+
   // รับข้อมูลปลาที่เลือกจากหน้า SelectFishSpecies
   useEffect(() => {
     if (route.params?.selectedFish) {
@@ -55,6 +57,26 @@ export default function AddFishScreen({ navigation, route }) {
       price: '',
       photo: null
     });
+    setUnknownFish(false);
+  };
+
+  const handleUnknownFishChange = (value) => {
+    setUnknownFish(value === 'unknown');
+    if (value === 'unknown') {
+      setFishForm(prev => ({
+        ...prev,
+        name: 'ไม่ทราบชื่อปลา',
+        commonName: 'ไม่ทราบชื่อปลา',
+        localName: 'ไม่ทราบชื่อปลา'
+      }));
+    } else {
+      setFishForm(prev => ({
+        ...prev,
+        name: '',
+        commonName: '',
+        localName: ''
+      }));
+    }
   };
 
   const handleSelectFishSpecies = () => {
@@ -301,6 +323,22 @@ export default function AddFishScreen({ navigation, route }) {
                   </Button>
                 </View>
               )}
+
+              {/* ปุ่ม: ไม่ทราบชื่อปลา */}
+              <View style={styles.unknownFishContainer}>
+                <Button
+                  mode={unknownFish ? "contained" : "outlined"}
+                  onPress={() => handleUnknownFishChange(unknownFish ? 'known' : 'unknown')}
+                  style={[
+                    styles.unknownFishButton,
+                    unknownFish && styles.unknownFishButtonActive
+                  ]}
+                  icon={unknownFish ? "check-circle" : "help-circle"}
+                  labelStyle={styles.unknownFishButtonLabel}
+                >
+                  ไม่ทราบชื่อปลา
+                </Button>
+              </View>
 
               <Text variant="bodySmall" style={styles.requiredNote}>
                 * กรุณากรอกจำนวนหรือน้ำหนักอย่างน้อย 1 ช่อง
@@ -560,6 +598,21 @@ const styles = StyleSheet.create({
   },
   selectFishButton: {
     backgroundColor: '#2196F3',
+  },
+  unknownFishContainer: {
+    marginTop: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  unknownFishButton: {
+    borderColor: '#FF9800',
+    minWidth: 200,
+  },
+  unknownFishButtonActive: {
+    backgroundColor: '#FF9800',
+  },
+  unknownFishButtonLabel: {
+    fontSize: 16,
   },
   input: {
     marginBottom: 12,
