@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "tracking-fish",
     slug: "tracking-fish",
-    version: "1.0.3",
+    version: "1.0.7",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
