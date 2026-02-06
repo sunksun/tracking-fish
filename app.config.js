@@ -50,12 +50,10 @@ export default {
         "expo-build-properties",
         {
           ios: {
-            useFrameworks: "static",
-            unstable_transformProfile: "hermes-stable"
+            useFrameworks: "static"
           }
         }
-      ],
-      "@react-native-firebase/app"
+      ]
     ],
     updates: {
       enabled: false

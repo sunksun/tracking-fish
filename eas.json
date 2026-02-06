@@ -25,10 +25,7 @@
         "buildType": "app-bundle"
       },
       "ios": {
-        "autoIncrement": true,
-        "cocoapods": {
-          "deploymentTarget": "13.4"
-        }
+        "autoIncrement": true
       }
     }
   }
