@@ -7,7 +7,7 @@ export default {
     version: "1.0.7",
     orientation: "portrait",
     icon: "./assets/icon.png",
-    userInterfaceStyle: "light",
+    userInterfaceStyle: "light",  
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
@@ -29,7 +29,7 @@ export default {
     },
     android: {
       package: "com.trackingfish.app",
-      versionCode: 8,
+      versionCode: 15,
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#2F5BA8"
