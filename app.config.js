@@ -29,7 +29,7 @@ export default {
     },
     android: {
       package: "com.trackingfish.app",
-      versionCode: 20,
+      versionCode: 21,
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#2F5BA8"
