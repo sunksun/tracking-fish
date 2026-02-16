@@ -1,6 +1,6 @@
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Button, Card, Text, Icon, IconButton } from 'react-native-paper';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -30,16 +30,16 @@ export default function HomeScreen({ navigation }) {
   };
 
   // Filter fishing history based on selected fisher or current user
-  const getFilteredHistory = () => {
+  // ใช้ useMemo เพื่อลด re-render และ log ที่ซ้ำ
+  const filteredHistory = useMemo(() => {
     // ตรวจสอบว่า user มีข้อมูลหรือไม่
     if (!user || !user.id) {
-      if (__DEV__) console.log('⚠️ User or user.id is null/undefined');
+      // แสดง warning แค่ครั้งเดียว
       return [];
     }
 
     if (isResearcher && selectedFisher) {
       // นักวิจัยเลือกชาวประมง → แสดงข้อมูลของชาวประมงคนนั้น
-      if (__DEV__) console.log('🔍 Filtering for researcher selected fisher:', selectedFisher.id);
       return fishingHistory.filter(entry => {
         // ตรวจสอบทั้ง fisherInfo.id และ userId เพื่อรองรับข้อมูลเก่า
         return entry.fisherInfo?.id === selectedFisher.id ||
@@ -47,18 +47,14 @@ export default function HomeScreen({ navigation }) {
       });
     } else if (!isResearcher) {
       // ชาวประมงล็อกอินเอง → แสดงเฉพาะข้อมูลของตัวเอง
-      if (__DEV__) console.log('🔍 Filtering for fisher:', user.id);
       return fishingHistory.filter(entry => {
         return entry.fisherInfo?.id === user.id ||
                entry.userId === user.id;
       });
     }
     // นักวิจัยยังไม่เลือกชาวประมง → ไม่แสดงข้อมูล
-    if (__DEV__) console.log('⚠️ Researcher has not selected a fisher');
     return [];
-  };
-
-  const filteredHistory = getFilteredHistory();
+  }, [fishingHistory, user, selectedFisher, isResearcher]);
 
   const handleLogout = () => {
     Alert.alert(

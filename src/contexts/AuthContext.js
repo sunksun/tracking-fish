@@ -54,12 +54,18 @@ export function AuthProvider({ children }) {
       if (firebaseResult.success) {
         // User exists in Firebase
         userData = firebaseResult.user;
-        
-        // Update last login time in Firebase
-        await FirebaseService.updateUser(userData.id, {
-          lastLoginAt: new Date().toISOString()
-        });
-        
+
+        // Update last login time in Firebase (non-blocking)
+        try {
+          await FirebaseService.updateUser(userData.id, {
+            lastLoginAt: new Date().toISOString()
+          });
+          if (__DEV__) console.log('✅ Updated lastLoginAt in Firebase');
+        } catch (error) {
+          // ไม่ต้อง block การ login ถ้า update ล้มเหลว
+          if (__DEV__) console.warn('⚠️ Could not update lastLoginAt:', error.message);
+        }
+
         userData.lastLoginAt = new Date().toISOString();
       } else {
         // User not found in Firebase

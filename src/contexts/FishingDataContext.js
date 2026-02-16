@@ -225,42 +225,55 @@ export function FishingDataProvider({ children }) {
 
       // Format entry for Firebase
       const firebaseEntry = FirebaseService.formatRecordForFirebase(entry, fisherId);
-      
+
       // Handle image uploads if there are any
       console.log('🔍 Checking for images to upload...', {
         fishListLength: firebaseEntry.fishList?.length || 0,
         fishList: firebaseEntry.fishList
       });
-      
+
       if (firebaseEntry.fishList && firebaseEntry.fishList.length > 0) {
         console.log('📷 Found fish list, checking images...');
-        
+
         for (let i = 0; i < firebaseEntry.fishList.length; i++) {
           const fish = firebaseEntry.fishList[i];
           console.log(`🐟 Fish ${i}:`, { name: fish.name, hasImage: !!fish.photo, imageUri: fish.photo });
-          
+
           if (fish.photo && fish.photo.startsWith('file://')) {
             console.log(`⬆️ Uploading image for fish ${i}...`);
-            
+
             // Upload image to Firebase Storage
-            const imagePath = FirebaseService.generateImagePath(user.id, entry.id, i);
+            // ✅ ใช้ fisherId แทน user.id เพื่อให้ path ตรงกับข้อมูลที่บันทึก
+            const imagePath = FirebaseService.generateImagePath(fisherId, entry.id, i);
             const uploadResult = await FirebaseService.uploadImage(fish.photo, imagePath);
-            
+
             if (uploadResult.success) {
               console.log(`✅ Image uploaded successfully for fish ${i}:`, uploadResult.url);
+
+              // ✅ ตรวจสอบว่า URL ที่ได้เป็น Firebase Storage URL จริง
+              if (!uploadResult.url || !uploadResult.url.startsWith('https://')) {
+                console.error(`❌ Invalid Firebase Storage URL for fish ${i}:`, uploadResult.url);
+                throw new Error(`ไม่สามารถอัปโหลดรูปภาพ ${fish.name} ได้: URL ไม่ถูกต้อง`);
+              }
+
               firebaseEntry.fishList[i].photo = uploadResult.url;
             } else {
               console.error(`❌ Error uploading image for fish ${i}:`, uploadResult.error);
-              // Keep local image path for now
+              // ❌ ไม่บันทึก local path - ต้อง throw error แทน
+              throw new Error(`ไม่สามารถอัปโหลดรูปภาพ ${fish.name} ได้: ${uploadResult.error}`);
             }
+          } else if (fish.photo && !fish.photo.startsWith('https://')) {
+            // ⚠️ ถ้ามีรูปแต่ไม่ใช่ file:// หรือ https:// = path ผิด
+            console.error(`❌ Invalid image path for fish ${i}:`, fish.photo);
+            throw new Error(`รูปภาพ ${fish.name} มี path ไม่ถูกต้อง: ${fish.photo}`);
           } else {
-            console.log(`ℹ️ Fish ${i} has no local image to upload`);
+            console.log(`ℹ️ Fish ${i} has no local image to upload or already uploaded`);
           }
         }
       } else {
         console.log('ℹ️ No fish list found or empty');
       }
-      
+
       // Save to Firebase
       const result = await FirebaseService.createFishingRecord(firebaseEntry);
       return result;
