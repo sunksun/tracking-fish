@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Modal, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, StyleSheet, FlatList, Alert, Modal, TouchableOpacity, Image, Dimensions } from 'react-native';
 import {
   Button,
   Text,
@@ -18,7 +18,6 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function SelectFishSpeciesScreen({ navigation }) {
   const [allFishSpecies, setAllFishSpecies] = useState([]);
-  const [filteredFishSpecies, setFilteredFishSpecies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedFish, setSelectedFish] = useState(null);
@@ -30,22 +29,20 @@ export default function SelectFishSpeciesScreen({ navigation }) {
     loadFishSpecies();
   }, []);
 
-  useEffect(() => {
-    // กรองรายการปลาตามคำค้นหา
+  // ใช้ useMemo แทน useEffect เพื่อกรองรายการ - ไม่ต้องมี state แยก
+  const filteredFishSpecies = useMemo(() => {
     if (searchQuery.trim() === '') {
-      setFilteredFishSpecies(allFishSpecies);
-    } else {
-      const filtered = allFishSpecies.filter((fish) => {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-          fish.thai_name?.toLowerCase().includes(searchLower) ||
-          fish.local_name?.toLowerCase().includes(searchLower) ||
-          fish.scientific_name?.toLowerCase().includes(searchLower) ||
-          fish.common_name_thai?.toLowerCase().includes(searchLower)
-        );
-      });
-      setFilteredFishSpecies(filtered);
+      return allFishSpecies;
     }
+    const searchLower = searchQuery.toLowerCase();
+    return allFishSpecies.filter((fish) => {
+      return (
+        fish.thai_name?.toLowerCase().includes(searchLower) ||
+        fish.local_name?.toLowerCase().includes(searchLower) ||
+        fish.scientific_name?.toLowerCase().includes(searchLower) ||
+        fish.common_name_thai?.toLowerCase().includes(searchLower)
+      );
+    });
   }, [searchQuery, allFishSpecies]);
 
   const loadFishSpecies = async () => {
@@ -71,7 +68,6 @@ export default function SelectFishSpeciesScreen({ navigation }) {
 
           const species = JSON.parse(cachedData);
           setAllFishSpecies(species);
-          setFilteredFishSpecies(species);
           setLoading(false);
           return;
         } else {
@@ -85,27 +81,9 @@ export default function SelectFishSpeciesScreen({ navigation }) {
       if (__DEV__) console.log('🔄 Starting to load fish species from Firebase...');
       const result = await FirebaseService.getAllFishSpecies();
 
-      if (__DEV__) console.log('📊 Result:', result);
-
       if (result.success) {
         if (__DEV__) {
           console.log('✅ Loaded fish species from Firebase:', result.species.length);
-
-          // Log fish species with images
-          const withImages = result.species.filter(f => f.image_url || f.imageUrl);
-          console.log('📸 Fish with images:', withImages.length);
-
-          if (withImages.length > 0) {
-            console.log('📋 รายการปลาที่มีรูป:');
-            withImages.forEach(f => {
-              const name = f.thai_name || f.local_name || f.scientific_name;
-              console.log(`  - ${name}: ${f.image_url || f.imageUrl}`);
-            });
-          }
-
-          if (result.species.length > 0) {
-            console.log('🐟 Sample fish:', result.species[0]);
-          }
         }
 
         // 4. บันทึกลง AsyncStorage cache
@@ -114,12 +92,10 @@ export default function SelectFishSpeciesScreen({ navigation }) {
           await AsyncStorage.setItem('fish_species_cache_time', now.toString());
           if (__DEV__) console.log('💾 Cached fish species data for 7 days');
         } catch (cacheError) {
-          // ถ้า cache ไม่ได้ก็ไม่เป็นไร ยังใช้งานได้ปกติ
           if (__DEV__) console.error('⚠️ Failed to cache data:', cacheError);
         }
 
         setAllFishSpecies(result.species);
-        setFilteredFishSpecies(result.species);
       } else {
         console.error('❌ Failed to load:', result.error);
         Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลชนิดปลาได้: ' + (result.error || 'Unknown error'));
@@ -132,25 +108,111 @@ export default function SelectFishSpeciesScreen({ navigation }) {
     }
   };
 
-  const handleSelectFish = (fish) => {
+  const handleSelectFish = useCallback((fish) => {
     setSelectedFish(fish);
-
-    // ส่งข้อมูลปลาทั้งหมดกลับไปหน้า AddFish
     navigation.navigate('AddFish', {
       selectedFish: fish,
       selectedFishCommonName: fish.common_name_thai || fish.thai_name || fish.scientific_name,
       selectedFishLocalName: fish.local_name || fish.common_name_thai || fish.thai_name
     });
-  };
+  }, [navigation]);
 
-  const getFishDescription = (fish) => {
-    const parts = [];
-    // แสดงชื่อท้องถิ่นถ้ามีและไม่ซ้ำกับชื่อไทย
+  const getFishDescription = useCallback((fish) => {
     if (fish.local_name && fish.thai_name !== fish.local_name) {
-      parts.push(`ชื่อท้องถิ่น: ${fish.local_name}`);
+      return `ชื่อท้องถิ่น: ${fish.local_name}`;
     }
-    return parts.join(' • ');
-  };
+    return '';
+  }, []);
+
+  // render แต่ละ item - ใช้ useCallback เพื่อไม่ให้สร้าง function ใหม่ทุกครั้ง
+  const renderFishItem = useCallback(({ item: fish }) => {
+    const isSelected = selectedFish?.id === fish.id;
+    const imageUrl = fish.image_url || fish.imageUrl;
+
+    return (
+      <View>
+        <List.Item
+          title={fish.thai_name || fish.local_name || fish.common_name_thai || 'ไม่ระบุชื่อ'}
+          description={getFishDescription(fish)}
+          left={(props) => (
+            <TouchableOpacity
+              style={styles.avatarContainer}
+              onPress={() => {
+                if (imageUrl) {
+                  setSelectedImageUrl(imageUrl);
+                  setSelectedImageName(fish.thai_name || fish.local_name || fish.common_name_thai || 'ไม่ระบุชื่อ');
+                  setImageModalVisible(true);
+                }
+              }}
+              disabled={!imageUrl}
+            >
+              {imageUrl ? (
+                <Avatar.Image
+                  {...props}
+                  size={50}
+                  source={{ uri: imageUrl }}
+                  style={styles.fishAvatar}
+                />
+              ) : (
+                <Avatar.Icon
+                  {...props}
+                  size={50}
+                  icon="fish"
+                  style={styles.fishAvatarIcon}
+                />
+              )}
+            </TouchableOpacity>
+          )}
+          right={(props) => (
+            <Button
+              {...props}
+              mode={isSelected ? 'contained' : 'outlined'}
+              onPress={() => handleSelectFish(fish)}
+              compact
+            >
+              {isSelected ? 'เลือกแล้ว' : 'เลือก'}
+            </Button>
+          )}
+          style={[styles.listItem, isSelected && styles.selectedListItem]}
+          titleStyle={styles.listItemTitle}
+          descriptionStyle={styles.listItemDescription}
+          descriptionNumberOfLines={2}
+        />
+        <Divider />
+      </View>
+    );
+  }, [selectedFish, getFishDescription, handleSelectFish]);
+
+  const keyExtractor = useCallback((item) => item.id, []);
+
+
+  const ListEmptyComponent = useMemo(() => (
+    <Card style={styles.emptyCard}>
+      <Card.Content>
+        <View style={styles.emptyState}>
+          <Text variant="titleMedium" style={styles.emptyTitle}>
+            ไม่พบชนิดปลาที่ค้นหา
+          </Text>
+          <Text variant="bodyMedium" style={styles.emptySubtitle}>
+            ลองค้นหาด้วยคำอื่น
+          </Text>
+        </View>
+      </Card.Content>
+    </Card>
+  ), []);
+
+  const ListFooterComponent = useMemo(() => (
+    <View style={styles.buttonContainer}>
+      <Button
+        mode="outlined"
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+        icon="arrow-left"
+      >
+        กลับ
+      </Button>
+    </View>
+  ), [navigation]);
 
   if (loading) {
     return (
@@ -163,141 +225,75 @@ export default function SelectFishSpeciesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header Card */}
-      <Card style={styles.headerCard}>
-        <Card.Content>
-          <View style={styles.headerTitleRow}>
-            <Text variant="titleMedium" style={styles.headerTitle}>
-              เลือกชนิดปลา
-            </Text>
-            <Button
-              mode="text"
-              compact
-              onPress={async () => {
-                try {
-                  // ล้าง cache และโหลดใหม่
-                  console.log('🗑️ Clearing fish species cache...');
-                  await AsyncStorage.removeItem('fish_species_cache');
-                  await AsyncStorage.removeItem('fish_species_cache_time');
-                  console.log('✅ Cache cleared, loading fresh data...');
-                  loadFishSpecies();
-                  Alert.alert('สำเร็จ', 'กำลังโหลดข้อมูลใหม่จาก Firebase...');
-                } catch (error) {
-                  console.error('❌ Error clearing cache:', error);
-                  Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
-                }
-              }}
-              style={styles.refreshButton}
-            >
-              รีเฟรช
-            </Button>
-          </View>
-          <Text variant="bodyMedium" style={styles.headerSubtitle}>
-            ค้นหาและเลือกชนิดปลาที่ต้องการบันทึก
-          </Text>
-        </Card.Content>
-      </Card>
-
-      {/* Search Bar */}
-      <Searchbar
-        placeholder="ค้นหาชื่อปลา (ภาษาไทย, ท้องถิ่น, หรือวิทยาศาสตร์)"
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={styles.searchBar}
-      />
-
-      {/* Fish Species List */}
-      <ScrollView style={styles.listContainer}>
-        {filteredFishSpecies.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <Card.Content>
-              <View style={styles.emptyState}>
-                <Text variant="titleMedium" style={styles.emptyTitle}>
-                  ไม่พบชนิดปลาที่ค้นหา
+      <FlatList
+        data={filteredFishSpecies}
+        keyExtractor={keyExtractor}
+        renderItem={renderFishItem}
+        ListHeaderComponent={
+          <View>
+            {/* Header Card */}
+            <Card style={styles.headerCard}>
+              <Card.Content>
+                <View style={styles.headerTitleRow}>
+                  <Text variant="titleMedium" style={styles.headerTitle}>
+                    เลือกชนิดปลา
+                  </Text>
+                  <Button
+                    mode="text"
+                    compact
+                    onPress={async () => {
+                      try {
+                        console.log('🗑️ Clearing fish species cache...');
+                        await AsyncStorage.removeItem('fish_species_cache');
+                        await AsyncStorage.removeItem('fish_species_cache_time');
+                        console.log('✅ Cache cleared, loading fresh data...');
+                        loadFishSpecies();
+                        Alert.alert('สำเร็จ', 'กำลังโหลดข้อมูลใหม่จาก Firebase...');
+                      } catch (error) {
+                        console.error('❌ Error clearing cache:', error);
+                        Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
+                      }
+                    }}
+                    style={styles.refreshButton}
+                  >
+                    รีเฟรช
+                  </Button>
+                </View>
+                <Text variant="bodyMedium" style={styles.headerSubtitle}>
+                  ค้นหาและเลือกชนิดปลาที่ต้องการบันทึก
                 </Text>
-                <Text variant="bodyMedium" style={styles.emptySubtitle}>
-                  ลองค้นหาด้วยคำอื่น
-                </Text>
-              </View>
-            </Card.Content>
-          </Card>
-        ) : (
-          <Card style={styles.listCard}>
-            <Card.Content style={styles.listCardContent}>
+              </Card.Content>
+            </Card>
+
+            {/* Search Bar */}
+            <Searchbar
+              placeholder="ค้นหาชื่อปลา (ภาษาไทย, ท้องถิ่น, หรือวิทยาศาสตร์)"
+              onChangeText={setSearchQuery}
+              value={searchQuery}
+              style={styles.searchBar}
+            />
+
+            {/* Result count */}
+            {filteredFishSpecies.length > 0 && (
               <Text variant="bodySmall" style={styles.resultCount}>
                 {searchQuery ? `พบ ${filteredFishSpecies.length} รายการ` : `ทั้งหมด ${filteredFishSpecies.length} ชนิด`}
               </Text>
-              {filteredFishSpecies.map((fish, index) => (
-                <React.Fragment key={fish.id}>
-                  <List.Item
-                    title={fish.thai_name || fish.local_name || fish.common_name_thai || 'ไม่ระบุชื่อ'}
-                    description={getFishDescription(fish)}
-                    left={(props) => (
-                      <TouchableOpacity
-                        style={styles.avatarContainer}
-                        onPress={() => {
-                          if (fish.image_url || fish.imageUrl) {
-                            setSelectedImageUrl(fish.image_url || fish.imageUrl);
-                            setSelectedImageName(fish.thai_name || fish.local_name || fish.common_name_thai || 'ไม่ระบุชื่อ');
-                            setImageModalVisible(true);
-                          }
-                        }}
-                        disabled={!fish.image_url && !fish.imageUrl}
-                      >
-                        {fish.image_url || fish.imageUrl ? (
-                          <Avatar.Image
-                            {...props}
-                            size={50}
-                            source={{ uri: fish.image_url || fish.imageUrl }}
-                            style={styles.fishAvatar}
-                          />
-                        ) : (
-                          <Avatar.Icon
-                            {...props}
-                            size={50}
-                            icon="fish"
-                            style={styles.fishAvatarIcon}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    )}
-                    right={(props) => (
-                      <Button
-                        {...props}
-                        mode={selectedFish?.id === fish.id ? 'contained' : 'outlined'}
-                        onPress={() => handleSelectFish(fish)}
-                        compact
-                      >
-                        {selectedFish?.id === fish.id ? 'เลือกแล้ว' : 'เลือก'}
-                      </Button>
-                    )}
-                    style={[
-                      styles.listItem,
-                      selectedFish?.id === fish.id && styles.selectedListItem
-                    ]}
-                    titleStyle={styles.listItemTitle}
-                    descriptionStyle={styles.listItemDescription}
-                    descriptionNumberOfLines={2}
-                  />
-                  {index < filteredFishSpecies.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </Card.Content>
-          </Card>
-        )}
-
-        {/* Back Button */}
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="outlined"
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-            icon="arrow-left"
-          >
-            กลับ
-          </Button>
-        </View>
-      </ScrollView>
+            )}
+          </View>
+        }
+        ListEmptyComponent={ListEmptyComponent}
+        ListFooterComponent={ListFooterComponent}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+        getItemLayout={(_data, index) => ({
+          length: 74,
+          offset: 74 * index,
+          index,
+        })}
+        style={styles.listContainer}
+      />
 
       {/* Image Modal */}
       <Modal
@@ -390,7 +386,7 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
     elevation: 2,
   },
   listContainer: {
@@ -398,20 +394,14 @@ const styles = StyleSheet.create({
   },
   resultCount: {
     color: '#666',
+    marginHorizontal: 16,
     marginBottom: 8,
     fontStyle: 'italic',
-  },
-  listCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    elevation: 2,
-  },
-  listCardContent: {
-    padding: 8,
   },
   listItem: {
     paddingVertical: 12,
     paddingHorizontal: 16,
+    backgroundColor: '#fff',
   },
   selectedListItem: {
     backgroundColor: '#e3f2fd',

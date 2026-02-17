@@ -4,10 +4,10 @@ export default {
   expo: {
     name: "tracking-fish",
     slug: "tracking-fish",
-    version: "1.0.7",
+    version: "1.0.8",
     orientation: "portrait",
     icon: "./assets/icon.png",
-    userInterfaceStyle: "light",  
+    userInterfaceStyle: "light",
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
@@ -16,7 +16,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.trackingfish.app",
-      buildNumber: "7",
+      buildNumber: "8",
       config: {
         usesNonExemptEncryption: false
       },
@@ -29,7 +29,7 @@ export default {
     },
     android: {
       package: "com.trackingfish.app",
-      versionCode: 21,
+      versionCode: 22,
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#2F5BA8"
