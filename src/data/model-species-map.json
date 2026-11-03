@@ -1,14 +1,14 @@
 {
-  "_comment": "แมปผลลัพธ์โมเดล (model_index) → ชนิดปลา ใช้ scientific_name เป็นกุญแจหลักในการจับคู่กับ Firestore collection 'fish_species' (ซึ่งมี ~312 ชนิด). catalog_number อ้างอิงคู่มือคีย์ปลาน้ำโขง. สร้างจาก fish_image/label_map.json + mekong-fish-prototype catalog.",
+  "_comment": "Source of truth ฝั่ง ML: แมป model_index/training_label → ข้อมูลชนิดปลา สร้างอัตโนมัติด้วย gen_species_catalog.py (label_map.json + คู่มือปลาน้ำโขง) ห้ามแก้มือ — รันสคริปต์ใหม่ทุกครั้งที่เทรนโมเดลใหม่",
   "model_file": "fish_model.keras",
-  "num_classes": 9,
+  "num_classes": 11,
   "preprocessing": {
     "input_size": [
       224,
       224
     ],
     "preprocess": "mobilenet_v2.preprocess_input",
-    "note": "ต้อง resize 224x224 + MobileNetV2 preprocess ให้ตรงกับตอนเทรน มิฉะนั้นผลเพี้ยน"
+    "note": "ต้อง resize 224x224 + MobileNetV2 preprocess ให้ตรงกับตอนเทรน"
   },
   "confidence_threshold": 0.6,
   "classes": [
@@ -19,79 +19,108 @@
       "scientific_name": "Tenualosa thibaudeaui",
       "common_name_thai": "หมากผาง",
       "local_name": "หมักผาง",
-      "family": "Clupeidae"
+      "family": "Clupeidae",
+      "species_id": "tenualosa-thibaudeaui"
     },
     {
       "model_index": 1,
+      "training_label": "071_ตาโป_ตามิน",
+      "catalog_number": 71,
+      "scientific_name": "Amblyrhynchichthys micracanthus",
+      "common_name_thai": "ตามิน",
+      "local_name": "ตาโป",
+      "family": "Cyprinidae",
+      "species_id": "amblyrhynchichthys-micracanthus"
+    },
+    {
+      "model_index": 2,
       "training_label": "075_หมักบาน_ตะกาก",
       "catalog_number": 75,
       "scientific_name": "Cosmochilus harmandi",
       "common_name_thai": "ตะกาก",
       "local_name": "หมักบาน",
-      "family": "Cyprinidae"
+      "family": "Cyprinidae",
+      "species_id": "cosmochilus-harmandi"
     },
     {
-      "model_index": 2,
+      "model_index": 3,
       "training_label": "085_ปากหนวด_จาด",
       "catalog_number": 85,
       "scientific_name": "Hypsibarbus malcolmi",
       "common_name_thai": "จาด",
       "local_name": "ปากหนวด",
-      "family": "Cyprinidae"
+      "family": "Cyprinidae",
+      "species_id": "hypsibarbus-malcolmi"
     },
     {
-      "model_index": 3,
+      "model_index": 4,
       "training_label": "096_สะกางเกสูง_วี",
       "catalog_number": 96,
       "scientific_name": "Puntioplites falcifer",
       "common_name_thai": "วี",
       "local_name": "สะกางเกสูง",
-      "family": "Cyprinidae"
+      "family": "Cyprinidae",
+      "species_id": "puntioplites-falcifer"
     },
     {
-      "model_index": 4,
+      "model_index": 5,
       "training_label": "100_หมักมาง_น้ำฝาย",
       "catalog_number": 100,
       "scientific_name": "Sikukia gudgeri",
       "common_name_thai": "น้ำฝาย",
       "local_name": "หมักมาง",
-      "family": "Cyprinidae"
+      "family": "Cyprinidae",
+      "species_id": "sikukia-gudgeri"
     },
     {
-      "model_index": 5,
+      "model_index": 6,
       "training_label": "186_แข้ควาย_แค้ควาย",
       "catalog_number": 186,
       "scientific_name": "Bagarius lica",
       "common_name_thai": "แค้ควาย",
       "local_name": "แข้ควาย",
-      "family": "Sisoridae"
+      "family": "Sisoridae",
+      "species_id": "bagarius-lica"
     },
     {
-      "model_index": 6,
+      "model_index": 7,
       "training_label": "191_ขบ_คางเบือน",
       "catalog_number": 191,
       "scientific_name": "Belodontichthys truncatus",
       "common_name_thai": "คางเบือน",
       "local_name": "ขบ",
-      "family": "Siluridae"
+      "family": "Siluridae",
+      "species_id": "belodontichthys-truncatus"
     },
     {
-      "model_index": 7,
+      "model_index": 8,
       "training_label": "219_ยอนตาโป_สังกะวาดท้องคม",
       "catalog_number": 219,
       "scientific_name": "Pseudolais pleurotaenia",
       "common_name_thai": "สังกะวาดท้องคม",
       "local_name": "ยอนตาโป",
-      "family": "Pangasiidae"
+      "family": "Pangasiidae",
+      "species_id": "pseudolais-pleurotaenia"
     },
     {
-      "model_index": 8,
+      "model_index": 9,
       "training_label": "226_กดเหลือง_กดเหลือง",
       "catalog_number": 226,
       "scientific_name": "Hemibagrus spilopterus",
       "common_name_thai": "กดเหลือง",
       "local_name": "กดเหลือง",
-      "family": "Bagridae"
+      "family": "Bagridae",
+      "species_id": "hemibagrus-spilopterus"
+    },
+    {
+      "model_index": 10,
+      "training_label": "228_เคิง_กดแก้ว",
+      "catalog_number": 228,
+      "scientific_name": "Hemibagrus wyckioides",
+      "common_name_thai": "กดแก้ว",
+      "local_name": "เคิง",
+      "family": "Bagridae",
+      "species_id": "hemibagrus-wyckioides"
     }
   ]
 }
