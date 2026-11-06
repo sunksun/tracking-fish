@@ -2,8 +2,8 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    name: "tracking-fish",
-    slug: "tracking-fish",
+    name: "tracking-fish-ai",
+    slug: "tracking-fish-ai",
     version: "1.0.8",
     orientation: "portrait",
     icon: "./assets/icon.png",
