@@ -11,8 +11,11 @@ import {
   Avatar,
   IconButton
 } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FirebaseService } from '../services/FirebaseService';
+import { AIService } from '../services/AIService';
+import { isAIConfigured } from '../config/ai';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -24,6 +27,13 @@ export default function SelectFishSpeciesScreen({ navigation }) {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState(null);
   const [selectedImageName, setSelectedImageName] = useState('');
+
+  // --- AI ช่วยแนะนำชนิดปลา (เฟส 2) ---
+  const [aiModalVisible, setAiModalVisible] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiResult, setAiResult] = useState(null); // { predictions, belowThreshold, matches: [{prediction, species}] }
+  const [aiPhotoUri, setAiPhotoUri] = useState(null);
 
   useEffect(() => {
     loadFishSpecies();
@@ -116,6 +126,81 @@ export default function SelectFishSpeciesScreen({ navigation }) {
       selectedFishLocalName: fish.local_name || fish.common_name_thai || fish.thai_name
     });
   }, [navigation]);
+
+  // รันจำแนกด้วย AI จาก uri รูป → แมปกับรายการ species ที่โหลดมา
+  const runAIClassify = useCallback(async (uri) => {
+    setAiPhotoUri(uri);
+    setAiError('');
+    setAiResult(null);
+    setAiLoading(true);
+    setAiModalVisible(true);
+    try {
+      const res = await AIService.classify(uri);
+      if (!res.ok) {
+        setAiError(res.error || 'จำแนกไม่สำเร็จ');
+        return;
+      }
+      // จับคู่ทุก prediction กับ species ในรายการ (ใช้ scientific_name)
+      const matches = res.predictions.map((p) => ({
+        prediction: p,
+        species: AIService.matchSpecies(p, allFishSpecies),
+      }));
+      setAiResult({ ...res, matches });
+    } catch (e) {
+      setAiError('เกิดข้อผิดพลาด: ' + e.message);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [allFishSpecies]);
+
+  // เปิดกล้อง/คลังรูปเพื่อให้ AI ช่วยแนะนำ
+  const handleAIPhoto = useCallback(async (source) => {
+    try {
+      let result;
+      if (source === 'camera') {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (perm.status !== 'granted') {
+          Alert.alert('ต้องการสิทธิ์กล้อง', 'เปิดสิทธิ์กล้องในการตั้งค่าเพื่อถ่ายรูปปลา');
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+      } else {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (perm.status !== 'granted') {
+          Alert.alert('ต้องการสิทธิ์คลังรูป', 'เปิดสิทธิ์คลังรูปเพื่อเลือกรูปปลา');
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({ quality: 0.8 });
+      }
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        runAIClassify(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('เปิดรูปไม่สำเร็จ', e.message);
+    }
+  }, [runAIClassify]);
+
+  // เริ่มขั้นตอน AI — ถ้ายังไม่ตั้งค่า URL ก็เตือน, ถ้าพร้อมก็ให้เลือกถ่าย/จากคลัง
+  const startAIFlow = useCallback(() => {
+    if (!isAIConfigured()) {
+      Alert.alert(
+        'ยังไม่ได้ตั้งค่า AI',
+        'ต้องตั้งค่า AI_API_URL ในไฟล์ .env ให้ชี้ไปที่เครื่องที่รันเซิร์ฟเวอร์วิเคราะห์ภาพก่อน'
+      );
+      return;
+    }
+    Alert.alert('ให้ AI ช่วยแนะนำชนิดปลา', 'เลือกรูปปลาที่จับได้', [
+      { text: 'ถ่ายรูป', onPress: () => handleAIPhoto('camera') },
+      { text: 'เลือกจากคลังรูป', onPress: () => handleAIPhoto('library') },
+      { text: 'ยกเลิก', style: 'cancel' },
+    ]);
+  }, [handleAIPhoto]);
+
+  // เลือกชนิดจากผล AI → ปิด modal แล้วใช้ flow เดิม
+  const handleSelectFromAI = useCallback((species) => {
+    setAiModalVisible(false);
+    handleSelectFish(species);
+  }, [handleSelectFish]);
 
   const getFishDescription = useCallback((fish) => {
     if (fish.local_name && fish.thai_name !== fish.local_name) {
@@ -262,6 +347,15 @@ export default function SelectFishSpeciesScreen({ navigation }) {
                 <Text variant="bodyMedium" style={styles.headerSubtitle}>
                   ค้นหาและเลือกชนิดปลาที่ต้องการบันทึก
                 </Text>
+                <Button
+                  mode="contained"
+                  icon="camera"
+                  onPress={startAIFlow}
+                  style={styles.aiButton}
+                  contentStyle={styles.aiButtonContent}
+                >
+                  ถ่ายรูปให้ AI ช่วยแนะนำ
+                </Button>
               </Card.Content>
             </Card>
 
@@ -341,6 +435,101 @@ export default function SelectFishSpeciesScreen({ navigation }) {
               </Button>
             </View>
           </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* AI Result Modal */}
+      <Modal
+        visible={aiModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAiModalVisible(false)}
+      >
+        <View style={styles.aiModalContainer}>
+          <View style={styles.aiModalCard}>
+            <View style={styles.aiModalHeader}>
+              <Text variant="titleLarge" style={styles.aiModalTitle}>
+                ผลการแนะนำจาก AI
+              </Text>
+              <IconButton icon="close" size={24} onPress={() => setAiModalVisible(false)} style={styles.closeButton} />
+            </View>
+
+            {aiPhotoUri && (
+              <Image source={{ uri: aiPhotoUri }} style={styles.aiPhoto} resizeMode="cover" />
+            )}
+
+            {aiLoading && (
+              <View style={styles.aiCenter}>
+                <ActivityIndicator size="large" color="#2196F3" />
+                <Text style={styles.aiLoadingText}>กำลังวิเคราะห์รูปปลา...</Text>
+              </View>
+            )}
+
+            {!aiLoading && aiError !== '' && (
+              <View style={styles.aiCenter}>
+                <Text style={styles.aiErrorTitle}>วิเคราะห์ไม่สำเร็จ</Text>
+                <Text style={styles.aiErrorText}>{aiError}</Text>
+                <Button mode="outlined" onPress={() => aiPhotoUri && runAIClassify(aiPhotoUri)} style={styles.aiRetry} icon="refresh">
+                  ลองอีกครั้ง
+                </Button>
+              </View>
+            )}
+
+            {!aiLoading && aiError === '' && aiResult && (
+              <>
+                {aiResult.belowThreshold && (
+                  <View style={styles.aiWarnBanner}>
+                    <Text style={styles.aiWarnText}>
+                      ยังไม่แน่ใจ — โปรดตรวจสอบและเลือกชนิดเอง
+                    </Text>
+                  </View>
+                )}
+                <FlatList
+                  data={aiResult.matches}
+                  keyExtractor={(m, i) => `${m.prediction.modelIndex}-${i}`}
+                  style={styles.aiList}
+                  renderItem={({ item, index }) => {
+                    const p = item.prediction;
+                    const matched = item.species;
+                    const isTop = index === 0;
+                    const strong = p.confidence >= aiResult.threshold;
+                    // top-1 ที่ผ่านเกณฑ์ = พระเอก; ตัวอื่นเป็นทางเลือก
+                    const barColor = strong ? '#2e7d32' : '#ef6c00';
+                    return (
+                      <View style={[styles.aiRow, isTop && strong && styles.aiRowTop]}>
+                        <View style={styles.aiRowText}>
+                          <Text style={[styles.aiName, isTop && styles.aiNameTop]}>
+                            {p.commonNameThai || matched?.thai_name || p.scientificName || 'ไม่ทราบชนิด'}
+                          </Text>
+                          {!!p.localName && <Text style={styles.aiLocal}>ท้องถิ่น: {p.localName}</Text>}
+                          {!!p.scientificName && <Text style={styles.aiSci}>{p.scientificName}</Text>}
+                          <View style={styles.aiBarTrack}>
+                            <View style={[styles.aiBarFill, { width: `${Math.min(100, p.confidencePercent)}%`, backgroundColor: barColor }]} />
+                          </View>
+                          <Text style={[styles.aiPct, { color: barColor }]}>{p.confidencePercent}%</Text>
+                        </View>
+                        {matched ? (
+                          <Button
+                            mode={isTop && strong ? 'contained' : 'outlined'}
+                            compact
+                            onPress={() => handleSelectFromAI(matched)}
+                            style={styles.aiPick}
+                          >
+                            เลือก
+                          </Button>
+                        ) : (
+                          <Text style={styles.aiNoMatch}>ไม่มีในรายการ</Text>
+                        )}
+                      </View>
+                    );
+                  }}
+                />
+                <Button mode="text" onPress={() => setAiModalVisible(false)} style={styles.aiManual}>
+                  ไม่ใช่ทั้งหมดนี้ — เลือกเอง
+                </Button>
+              </>
+            )}
+          </View>
         </View>
       </Modal>
     </View>
@@ -491,5 +680,148 @@ const styles = StyleSheet.create({
   closeModalButton: {
     marginTop: 16,
     width: '100%',
+  },
+  // ปุ่มเรียก AI ใน header
+  aiButton: {
+    marginTop: 12,
+    backgroundColor: '#2196F3',
+  },
+  aiButtonContent: {
+    paddingVertical: 6,
+  },
+  // AI result modal
+  aiModalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  aiModalCard: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+    paddingTop: 8,
+    maxHeight: SCREEN_HEIGHT * 0.85,
+  },
+  aiModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  aiModalTitle: {
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  aiPhoto: {
+    width: '100%',
+    height: 160,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: '#eee',
+  },
+  aiCenter: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  aiLoadingText: {
+    marginTop: 12,
+    color: '#666',
+  },
+  aiErrorTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#c62828',
+    marginBottom: 4,
+  },
+  aiErrorText: {
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  aiRetry: {
+    borderColor: '#2196F3',
+  },
+  aiWarnBanner: {
+    backgroundColor: '#fff3e0',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  aiWarnText: {
+    color: '#e65100',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  aiList: {
+    marginTop: 4,
+  },
+  aiRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e0e0e0',
+  },
+  aiRowTop: {
+    backgroundColor: '#e8f5e9',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 0,
+    marginBottom: 4,
+  },
+  aiRowText: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  aiName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  aiNameTop: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  aiLocal: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
+  },
+  aiSci: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
+    marginTop: 1,
+  },
+  aiBarTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#eceff1',
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  aiBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  aiPct: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  aiPick: {
+    alignSelf: 'center',
+  },
+  aiNoMatch: {
+    fontSize: 12,
+    color: '#999',
+    alignSelf: 'center',
+    maxWidth: 80,
+    textAlign: 'center',
+  },
+  aiManual: {
+    marginTop: 8,
   },
 });

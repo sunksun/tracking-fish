@@ -73,7 +73,10 @@ export default {
       firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
       firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      firebaseAppId: process.env.FIREBASE_APP_ID
+      firebaseAppId: process.env.FIREBASE_APP_ID,
+      // เฟส 2: URL ของ fish_api (endpoint วิเคราะห์ภาพปลา) — ต้องเป็น LAN IP ของเครื่องที่รัน API
+      // เช่น http://192.168.1.50:8000  (ดู IP: ipconfig getifaddr en0)  อย่าใช้ localhost บนมือถือจริง
+      aiApiUrl: process.env.AI_API_URL
     }
   }
 };
