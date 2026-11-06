@@ -1,30 +1,37 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, Keyboard, Image } from 'react-native';
+import { View, StyleSheet, Alert, Keyboard, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import {
   Button,
   Text,
   TextInput,
   ActivityIndicator,
-  Card
 } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
+
+// สายน้ำโขงยามเช้า — น้ำลึก → ผิวน้ำ, แดดเช้าเป็นสีเน้นเดียว
+const COLORS = {
+  riverDeep: '#0B4F6C',
+  riverMid: '#1B7A94',
+  riverLight: '#3D9BB5',
+  sunrise: '#E8A33D',
+  sunriseDark: '#D1902F',
+  sand: '#F2EFE6',
+  ink: '#0A2E3D',
+  inkSoft: '#4A6B78',
+};
 
 export default function SimpleLoginScreen() {
   const { loginWithPhoneNumber, loading } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
 
-  // Format phone number as user types
   const handlePhoneChange = (text) => {
-    // Remove all non-digits
     const digits = text.replace(/\D/g, '');
-    
-    // Limit to 10 digits
     if (digits.length <= 10) {
       setPhoneNumber(digits);
     }
   };
 
-  // Format display of phone number
   const getFormattedPhone = () => {
     if (phoneNumber.length >= 3) {
       return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
@@ -33,23 +40,15 @@ export default function SimpleLoginScreen() {
   };
 
   const handleLogin = async () => {
-    // ปิดแป้นพิมพ์ก่อน
     Keyboard.dismiss();
-    
     if (!phoneNumber || phoneNumber.length !== 10) {
       Alert.alert('เบอร์โทรศัพท์ไม่ถูกต้อง', 'กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก');
       return;
     }
-
-    const result = await loginWithPhoneNumber(phoneNumber);
-    
-    if (result.success) {
-      // User will be automatically navigated by auth state change
-    }
+    await loginWithPhoneNumber(phoneNumber);
   };
 
   const handlePhoneSubmit = () => {
-    // เมื่อกด Done/Return บนแป้นพิมพ์
     Keyboard.dismiss();
     if (phoneNumber.length === 10) {
       handleLogin();
@@ -58,173 +57,212 @@ export default function SimpleLoginScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
+      <View style={[styles.loadingContainer, { backgroundColor: COLORS.riverDeep }]}>
+        <ActivityIndicator size="large" color={COLORS.sunrise} />
         <Text style={styles.loadingText}>กำลังตรวจสอบข้อมูล...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {/* Logo Icon */}
-        <View style={styles.iconContainer}>
-          <Image
-            source={require('../../assets/icon-logo.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-        </View>
+    <View style={styles.root}>
+      {/* ชั้นไล่เฉดน้ำ (แทน gradient ด้วย view ซ้อน) — pointerEvents none ให้แตะทะลุไปโดนฟอร์มได้ */}
+      <View pointerEvents="none" style={[styles.waterLayer, { backgroundColor: COLORS.riverDeep, top: 0, height: '55%' }]} />
+      <View pointerEvents="none" style={[styles.waterLayer, { backgroundColor: COLORS.riverMid, top: '30%', height: '35%', opacity: 0.9 }]} />
+      <View pointerEvents="none" style={[styles.waterLayer, { backgroundColor: COLORS.riverLight, top: '48%', height: '20%', opacity: 0.5 }]} />
+      {/* ผิวน้ำโค้ง คั่นหัวกับฟอร์ม */}
+      <View pointerEvents="none" style={styles.surfaceCurve} />
 
-        {/* App Title */}
-        <Text variant="titleLarge" style={styles.appTitle}>
-          ระบบติดตามการจับสัตว์น้ำ
-        </Text>
-      </View>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* หัว — โลโก้ + ชื่อระบบ (พระเอกของหน้า) */}
+            <View style={styles.hero}>
+              <View style={styles.logoRing}>
+                <Image
+                  source={require('../../assets/icon-logo.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.appTitle}>ระบบจำแนกและติดตาม{'\n'}ปลาแม่น้ำโขง</Text>
+              <Text style={styles.appTagline}>ถ่ายรูปปลา · รู้ชนิด · บันทึกการจับ</Text>
+            </View>
 
-      <View style={styles.content}>
-        {/* Login Card */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.loginTitle}>
-              เข้าสู่ระบบ
+            {/* ฟอร์ม — ลอยบนแผ่น sand */}
+            <View style={styles.panel}>
+              <Text style={styles.panelHeading}>เข้าใช้งาน</Text>
+              <Text style={styles.panelSub}>กรอกเบอร์โทรศัพท์ของคุณเพื่อเริ่มใช้งาน</Text>
+
+              <TextInput
+                label="เบอร์โทรศัพท์"
+                value={getFormattedPhone()}
+                onChangeText={handlePhoneChange}
+                keyboardType="phone-pad"
+                mode="outlined"
+                style={styles.input}
+                maxLength={12}
+                left={<TextInput.Icon icon="phone" />}
+                returnKeyType="done"
+                onSubmitEditing={handlePhoneSubmit}
+                blurOnSubmit
+                outlineColor="#D8D3C4"
+                activeOutlineColor={COLORS.riverMid}
+              />
+
+              <Button
+                mode="contained"
+                onPress={handleLogin}
+                style={styles.loginButton}
+                contentStyle={styles.loginButtonContent}
+                labelStyle={styles.loginButtonLabel}
+                disabled={phoneNumber.length !== 10 || loading}
+                buttonColor={COLORS.sunrise}
+                loading={loading}
+              >
+                เข้าใช้งาน
+              </Button>
+            </View>
+
+            {/* ที่มาโครงการ */}
+            <Text style={styles.projectTitle}>
+              ภายใต้โครงการวิจัยการจัดการความหลากหลายทางชีวภาพ{'\n'}
+              ของพันธุ์ปลาในแม่น้ำโขง อ.เชียงคาน – อ.ปากชม
             </Text>
-
-            <Text variant="bodyMedium" style={styles.subtitle}>
-              กรอกหมายเลขโทรศัพท์เพื่อเข้าสู่ระบบ
-            </Text>
-
-            <TextInput
-              label="เบอร์โทรศัพท์"
-              value={getFormattedPhone()}
-              onChangeText={handlePhoneChange}
-              keyboardType="phone-pad"
-              mode="outlined"
-              style={styles.input}
-              placeholder=""
-              maxLength={12} // For formatted display
-              left={<TextInput.Icon icon="phone" />}
-              returnKeyType="done"
-              onSubmitEditing={handlePhoneSubmit}
-              blurOnSubmit={true}
-            />
-
-
-            <Button
-              mode="contained"
-              onPress={handleLogin}
-              style={styles.loginButton}
-              disabled={phoneNumber.length !== 10 || loading}
-              icon="login"
-              loading={loading}
-            >
-              เข้าสู่ระบบ
-            </Button>
-          </Card.Content>
-        </Card>
-
-        {/* Project Title Footer */}
-        <View style={styles.footer}>
-          <Text variant="bodySmall" style={styles.projectTitle}>
-            ภายใต้โครงการวิจัย{'\n'}
-            การจัดการความหลากหลายทางชีวภาพของพันธุ์ปลาในแม่นํ้าโขง{'\n'}
-            อ.เชียงคาน - อ.ปากชม
-          </Text>
-        </View>
-      </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.sand,
   },
-  header: {
-    backgroundColor: '#fff',
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 32,
+  flex: { flex: 1 },
+  waterLayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+  // ผิวน้ำโค้งมนคั่นระหว่างหัวสีน้ำกับพื้น sand
+  surfaceCurve: {
+    position: 'absolute',
+    top: '50%',
+    left: -40,
+    right: -40,
+    height: 220,
+    backgroundColor: COLORS.sand,
+    borderTopLeftRadius: 280,
+    borderTopRightRadius: 280,
+  },
+  safe: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 28,
+    paddingTop: 24,
+    paddingBottom: 28,
+  },
+  hero: {
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    marginBottom: 28,
   },
-  iconContainer: {
-    marginBottom: 12,
-    backgroundColor: '#e3f2fd',
-    borderRadius: 20,
-    width: 120,
-    height: 120,
+  logoRing: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    backgroundColor: COLORS.sand,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.35)',
+    marginBottom: 18,
   },
   logoImage: {
-    width: '100%',
-    height: '100%',
+    width: '82%',
+    height: '82%',
   },
   appTitle: {
     textAlign: 'center',
-    fontWeight: 'bold',
-    color: '#2196F3',
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
-  content: {
-    flex: 1,
-    padding: 32,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 80, // ขยับ card ขึ้นด้านบน
-  },
-  card: {
-    width: '100%',
-    marginBottom: 24,
-    elevation: 4,
-  },
-  loginTitle: {
+  appTagline: {
     textAlign: 'center',
-    marginBottom: 8,
-    color: '#2196F3',
-    fontWeight: 'bold',
+    fontSize: 14,
+    color: 'rgba(242,239,230,0.85)',
+    marginTop: 20,
   },
-  subtitle: {
+  // แผ่นฟอร์มลอยบนผิวน้ำ
+  panel: {
+    backgroundColor: COLORS.sand,
+    borderRadius: 24,
+    paddingHorizontal: 22,
+    paddingVertical: 26,
+    marginTop: 8,
+    // เงานุ่มให้รู้สึกลอย
+    elevation: 8,
+    shadowColor: COLORS.ink,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+  },
+  panelHeading: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: COLORS.ink,
     textAlign: 'center',
-    color: '#666',
+  },
+  panelSub: {
+    fontSize: 14,
+    color: COLORS.inkSoft,
+    marginTop: 4,
     marginBottom: 20,
-    lineHeight: 18,
+    textAlign: 'center',
   },
   input: {
-    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 20,
   },
   loginButton: {
-    paddingVertical: 4,
+    borderRadius: 14,
   },
-  footer: {
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: 'transparent',
+  loginButtonContent: {
+    paddingVertical: 8,
+  },
+  loginButtonLabel: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: COLORS.ink,
   },
   projectTitle: {
     textAlign: 'center',
-    color: '#666',
-    lineHeight: 16,
-    fontStyle: 'italic',
+    color: COLORS.inkSoft,
+    lineHeight: 18,
     fontSize: 12,
+    marginTop: 'auto',
+    paddingTop: 28,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     marginTop: 16,
-    color: '#666',
+    color: COLORS.sand,
   },
 });

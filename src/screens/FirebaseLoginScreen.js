@@ -108,7 +108,7 @@ export default function FirebaseLoginScreen() {
 
         {/* App Title */}
         <Text variant="headlineMedium" style={styles.appTitle}>
-          ระบบติดตามการจับสัตว์น้ำ
+          ระบบจำแนกและติดตามปลาแม่น้ำโขง
         </Text>
 
         {step === 'phone' ? (

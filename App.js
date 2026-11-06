@@ -50,7 +50,7 @@ function AppNavigator() {
             <Stack.Screen
               name="Home"
               component={HomeScreen}
-              options={{ title: 'ติดตามการจับปลาแม่น้ำโขง' }}
+              options={{ title: 'จำแนกและติดตามปลาแม่น้ำโขง' }}
             />
             <Stack.Screen
               name="SelectFisher"
