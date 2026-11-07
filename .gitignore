@@ -53,3 +53,6 @@ GoogleService-Info.plist
 check-firestore-data.js
 check-user-data.js
 convert-csv.js
+
+# Local agent tooling (aider-desk) - not part of the project source
+.aider-desk/
