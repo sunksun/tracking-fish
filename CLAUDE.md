@@ -88,3 +88,17 @@ The app uses React Navigation with stack navigation:
 - Designed for offline usage with local data persistence
 - Responsive design suitable for mobile devices
 - Clean separation between data layer (Context) and UI (Screens)
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in GitHub Issues (`sunksun/tracking-fish`, via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (each label string equals its role name). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
