@@ -8,6 +8,7 @@ import {
   deleteDoc,
   query,
   where,
+  onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
 import { 
@@ -129,6 +130,53 @@ export class FirebaseService {
     } catch (error) {
       console.error('Error getting fishing records:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  // Realtime subscription for fishing records.
+  // Returns an unsubscribe function — the caller MUST call it on cleanup.
+  static subscribeFishingRecords(userId = null, onData, onError, limit = null) {
+    try {
+      let q = collection(db, this.COLLECTIONS.FISHING_RECORDS);
+
+      // Apply filters
+      if (userId) {
+        q = query(q, where("userId", "==", userId));
+      }
+
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const records = [];
+
+          querySnapshot.forEach((doc) => {
+            records.push({ id: doc.id, ...doc.data() });
+          });
+
+          // Sort by date on client side (most recent first)
+          records.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB - dateA;
+          });
+
+          // Apply limit after sorting
+          const result = limit ? records.slice(0, limit) : records;
+
+          onData(result);
+        },
+        (error) => {
+          console.error('Error subscribing to fishing records:', error);
+          if (onError) onError(error);
+        }
+      );
+
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up fishing records subscription:', error);
+      if (onError) onError(error);
+      // Return a no-op so the caller can always safely call unsubscribe()
+      return () => {};
     }
   }
 

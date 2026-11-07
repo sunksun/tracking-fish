@@ -140,11 +140,17 @@ export function FishingDataProvider({ children }) {
     saveDataToStorage();
   }, [state.fishingHistory, state.fisherInfo]);
 
-  // Sync with Firebase when user is authenticated or selectedFisher changes
+  // Subscribe to Firebase in realtime when user is authenticated or selectedFisher changes.
+  // The subscription is torn down on cleanup (user change / logout / unmount) to avoid
+  // memory leaks and stale listeners accumulating Firestore reads.
   useEffect(() => {
-    if (isAuthenticated && user) {
-      syncWithFirebase();
-    }
+    if (!isAuthenticated || !user?.id) return;
+
+    const unsubscribe = subscribeToFishingRecords();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id, selectedFisher?.id]);
 
@@ -174,28 +180,28 @@ export function FishingDataProvider({ children }) {
     }
   };
 
-  // Firebase sync functions
-  const syncWithFirebase = async () => {
-    if (!user?.id) return;
+  // Firebase realtime subscription.
+  // Opens an onSnapshot listener and returns its unsubscribe function so the
+  // caller (useEffect) can tear it down on cleanup.
+  const subscribeToFishingRecords = () => {
+    if (!user?.id) return () => {};
 
-    try {
-      dispatch({ type: actionTypes.SET_SYNC_STATUS, payload: { status: 'syncing' } });
+    // กำหนด userId ที่จะโหลดข้อมูล
+    // - ถ้าเป็นนักวิจัยและเลือกชาวประมงแล้ว ให้โหลดข้อมูลของชาวประมง
+    // - ถ้าเป็นชาวประมงเข้าใช้เอง ให้โหลดข้อมูลของตัวเอง
+    const targetUserId = isResearcher && selectedFisher ? selectedFisher.id : user.id;
 
-      // กำหนด userId ที่จะโหลดข้อมูล
-      // - ถ้าเป็นนักวิจัยและเลือกชาวประมงแล้ว ให้โหลดข้อมูลของชาวประมง
-      // - ถ้าเป็นชาวประมงเข้าใช้เอง ให้โหลดข้อมูลของตัวเอง
-      const targetUserId = isResearcher && selectedFisher ? selectedFisher.id : user.id;
+    console.log('🔄 Subscribing to Firebase for user:', targetUserId, isResearcher ? '(researcher mode)' : '(fisher mode)');
 
-      console.log('🔄 Syncing with Firebase for user:', targetUserId, isResearcher ? '(researcher mode)' : '(fisher mode)');
+    dispatch({ type: actionTypes.SET_SYNC_STATUS, payload: { status: 'syncing' } });
 
-      // Load fishing records from Firebase
-      const result = await FirebaseService.getFishingRecords(targetUserId);
-
-      if (result.success) {
-        console.log(`✅ Loaded ${result.records.length} records from Firebase`);
+    const unsubscribe = FirebaseService.subscribeFishingRecords(
+      targetUserId,
+      (records) => {
+        console.log(`✅ Received ${records.length} records from Firebase (realtime)`);
 
         // Convert Firebase records to local format
-        const formattedRecords = result.records.map(record =>
+        const formattedRecords = records.map(record =>
           FirebaseService.formatRecordFromFirebase(record)
         );
 
@@ -205,13 +211,14 @@ export function FishingDataProvider({ children }) {
         dispatch({ type: actionTypes.SET_SYNC_STATUS, payload: { status: 'success' } });
 
         console.log(`📊 Loaded ${formattedRecords.length} records for ${isResearcher && selectedFisher ? 'selected fisher' : 'current user'}`);
-      } else {
-        throw new Error(result.error);
+      },
+      (error) => {
+        console.error('Error subscribing to Firebase:', error);
+        dispatch({ type: actionTypes.SET_SYNC_STATUS, payload: { status: 'error' } });
       }
-    } catch (error) {
-      console.error('Error syncing with Firebase:', error);
-      dispatch({ type: actionTypes.SET_SYNC_STATUS, payload: { status: 'error' } });
-    }
+    );
+
+    return unsubscribe;
   };
 
   const saveEntryToFirebase = async (entry) => {
@@ -367,10 +374,11 @@ export function FishingDataProvider({ children }) {
     dispatch({ type: actionTypes.RESET_CURRENT_ENTRY });
   };
 
+  // Data is now kept up to date in realtime via the onSnapshot subscription,
+  // so an explicit refresh is no longer required. Kept as a resolved no-op so
+  // existing pull-to-refresh handlers (HistoryScreen / HomeScreen) still work.
   const forceSyncWithFirebase = () => {
-    if (isAuthenticated && user?.id) {
-      syncWithFirebase();
-    }
+    return Promise.resolve();
   };
 
   const value = {
