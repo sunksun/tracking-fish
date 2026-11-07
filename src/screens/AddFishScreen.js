@@ -80,7 +80,7 @@ export default function AddFishScreen({ navigation, route }) {
   };
 
   const handleSelectFishSpecies = () => {
-    navigation.navigate('SelectFishSpecies');
+    navigation.navigate('SelectFishSpecies', { mode: 'picker' });
   };
 
   const validateForm = () => {

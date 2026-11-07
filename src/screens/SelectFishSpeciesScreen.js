@@ -12,6 +12,7 @@ import {
   IconButton
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FirebaseService } from '../services/FirebaseService';
 import { AIService } from '../services/AIService';
@@ -19,7 +20,11 @@ import { isAIConfigured } from '../config/ai';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function SelectFishSpeciesScreen({ navigation }) {
+export default function SelectFishSpeciesScreen({ navigation, route }) {
+  // โหมด 'picker' = ถูกเรียกจาก flow บันทึก (เลือกแล้วส่งชนิดกลับไป AddFish)
+  // ไม่มี mode = แท็บจำแนกปลา standalone (แตะเพื่อดูรายละเอียด/รูป ไม่ navigate)
+  const isPicker = route?.params?.mode === 'picker';
+  const tabBarHeight = useBottomTabBarHeight();
   const [allFishSpecies, setAllFishSpecies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -120,12 +125,22 @@ export default function SelectFishSpeciesScreen({ navigation }) {
 
   const handleSelectFish = useCallback((fish) => {
     setSelectedFish(fish);
+    if (!isPicker) {
+      // แท็บจำแนกปลา: ไม่มีปลายทาง AddFish — เปิดดูรูป/รายละเอียดแทน
+      const imageUrl = fish.image_url || fish.imageUrl;
+      if (imageUrl) {
+        setSelectedImageUrl(imageUrl);
+        setSelectedImageName(fish.thai_name || fish.local_name || fish.common_name_thai || 'ไม่ระบุชื่อ');
+        setImageModalVisible(true);
+      }
+      return;
+    }
     navigation.navigate('AddFish', {
       selectedFish: fish,
       selectedFishCommonName: fish.common_name_thai || fish.thai_name || fish.scientific_name,
       selectedFishLocalName: fish.local_name || fish.common_name_thai || fish.thai_name
     });
-  }, [navigation]);
+  }, [navigation, isPicker]);
 
   // รันจำแนกด้วย AI จาก uri รูป → แมปกับรายการ species ที่โหลดมา
   const runAIClassify = useCallback(async (uri) => {
@@ -251,11 +266,11 @@ export default function SelectFishSpeciesScreen({ navigation }) {
           right={(props) => (
             <Button
               {...props}
-              mode={isSelected ? 'contained' : 'outlined'}
+              mode={isPicker && isSelected ? 'contained' : 'outlined'}
               onPress={() => handleSelectFish(fish)}
               compact
             >
-              {isSelected ? 'เลือกแล้ว' : 'เลือก'}
+              {isPicker ? (isSelected ? 'เลือกแล้ว' : 'เลือก') : 'ดู'}
             </Button>
           )}
           style={[styles.listItem, isSelected && styles.selectedListItem]}
@@ -266,7 +281,7 @@ export default function SelectFishSpeciesScreen({ navigation }) {
         <Divider />
       </View>
     );
-  }, [selectedFish, getFishDescription, handleSelectFish]);
+  }, [selectedFish, getFishDescription, handleSelectFish, isPicker]);
 
   const keyExtractor = useCallback((item) => item.id, []);
 
@@ -314,6 +329,7 @@ export default function SelectFishSpeciesScreen({ navigation }) {
         data={filteredFishSpecies}
         keyExtractor={keyExtractor}
         renderItem={renderFishItem}
+        contentContainerStyle={{ paddingBottom: tabBarHeight }}
         ListHeaderComponent={
           <View>
             {/* Header Card */}

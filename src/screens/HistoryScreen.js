@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import {
   Button,
   Card,
@@ -24,6 +25,7 @@ const WATER_SOURCE_LABELS = {
 };
 
 export default function HistoryScreen({ navigation }) {
+  const tabBarHeight = useBottomTabBarHeight();
   const { fishingHistory, syncWithFirebase } = useFishingData();
   const { user, selectedFisher, isResearcher } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -339,7 +341,7 @@ export default function HistoryScreen({ navigation }) {
         </Text>
         <Button
           mode="contained"
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}
           style={styles.emptyButton}
           icon="plus"
         >
@@ -351,7 +353,7 @@ export default function HistoryScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}>
         <View style={styles.content}>
           {/* Search and Sort with Refresh */}
           <View style={styles.headerContainer}>
@@ -497,7 +499,7 @@ export default function HistoryScreen({ navigation }) {
           {/* Home Button */}
           <Button
             mode="outlined"
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}
             style={styles.homeButton}
             icon="home"
           >

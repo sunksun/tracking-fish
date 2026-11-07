@@ -144,7 +144,7 @@ export default function SummaryScreen({ navigation }) {
             Alert.alert(
               'สำเร็จ',
               'บันทึกข้อมูลเรียบร้อยแล้ว',
-              [{ text: 'ตกลง', onPress: () => navigation.navigate('History') }]
+              [{ text: 'ตกลง', onPress: () => navigation.navigate('HistoryTab', { screen: 'History' }) }]
             );
           }
         }

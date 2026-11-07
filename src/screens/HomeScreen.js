@@ -1,5 +1,6 @@
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Button, Card, Text, Icon, IconButton } from 'react-native-paper';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useState, useMemo } from 'react';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,6 +9,7 @@ export default function HomeScreen({ navigation }) {
   const { fishingHistory, syncWithFirebase } = useFishingData();
   const { user, selectedFisher, isResearcher, signOut, clearSelectedFisher } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const tabBarHeight = useBottomTabBarHeight();
 
   // ฟังก์ชันสำหรับกดปุ่ม refresh
   const handleRefresh = async () => {
@@ -80,7 +82,7 @@ export default function HomeScreen({ navigation }) {
       );
       return;
     }
-    navigation.navigate('DataEntry');
+    navigation.navigate('RecordTab', { screen: 'DataEntry' });
   };
 
   const handleChangeFisher = () => {
@@ -204,7 +206,10 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}
+    >
       <View style={styles.content}>
         {/* Header with user info and refresh button */}
         <Card style={[styles.card, styles.headerCard]}>
@@ -412,7 +417,7 @@ export default function HomeScreen({ navigation }) {
               </Text>
               <Button
                 mode="outlined"
-                onPress={() => navigation.navigate('History')}
+                onPress={() => navigation.navigate('HistoryTab', { screen: 'History' })}
                 style={[styles.actionButton, styles.secondaryActionButton]}
                 contentStyle={styles.buttonContent}
                 icon="arrow-right"
