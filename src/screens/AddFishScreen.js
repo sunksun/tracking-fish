@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import {
   Button,
-  Card,
   Text,
   TextInput,
   List,
@@ -12,6 +11,11 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useFishingData } from '../contexts/FishingDataContext';
+import ScreenContainer from '../components/ScreenContainer';
+import CurvedHeader from '../components/CurvedHeader';
+import Panel from '../components/Panel';
+import PrimaryButton from '../components/PrimaryButton';
+import { colors, spacing, radius } from '../theme';
 
 export default function AddFishScreen({ navigation, route }) {
   const { currentEntry, addFish, removeFish } = useFishingData();
@@ -266,19 +270,13 @@ export default function AddFishScreen({ navigation, route }) {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-      >
-        <View style={styles.content}>
-          {/* Add Fish Form */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                เพิ่มรายการปลา
-              </Text>
-
-              {/* Select Fish Species Button */}
+    <ScreenContainer
+      header={<CurvedHeader eyebrow="ขั้นที่ 2 จาก 3" title="เพิ่มรายการปลา" />}
+      contentContainerStyle={styles.content}
+    >
+      {/* Add Fish Form */}
+      <Panel title="เพิ่มรายการปลา">
+        {/* Select Fish Species Button */}
               {fishForm.commonName ? (
                 <View style={styles.selectedFishInfo}>
                   <View style={styles.selectedFishRow}>
@@ -415,7 +413,7 @@ export default function AddFishScreen({ navigation, route }) {
                       onPress={removePhoto}
                       style={styles.photoButton}
                       icon="delete"
-                      textColor="#f44336"
+                      textColor={colors.clay}
                     >
                       ลบรูป
                     </Button>
@@ -423,136 +421,111 @@ export default function AddFishScreen({ navigation, route }) {
                 </View>
               ) : (
                 <TouchableOpacity style={styles.photoPlaceholder} onPress={showImagePicker}>
-                  <IconButton icon="camera-plus" size={48} iconColor="#2196F3" />
+                  <IconButton icon="camera-plus" size={48} iconColor={colors.riverMid} />
                   <Text variant="bodyMedium" style={styles.photoPlaceholderText}>
                     แตะเพื่อถ่ายรูปปลา
                   </Text>
                 </TouchableOpacity>
               )}
 
-              <Button
-                mode="contained"
-                onPress={handleAddFish}
-                style={styles.addButton}
-                icon="plus"
-              >
-                เพิ่มปลาชนิดนี้
-              </Button>
-            </Card.Content>
-          </Card>
+        <Button
+          mode="contained"
+          onPress={handleAddFish}
+          style={styles.addButton}
+          buttonColor={colors.riverMid}
+          icon="plus"
+        >
+          เพิ่มปลาชนิดนี้
+        </Button>
+      </Panel>
 
-          {/* Fish List */}
-          {currentEntry.fishList.length > 0 && (
-            <Card style={styles.card}>
-              <Card.Content>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  รายการปลาที่บันทึกแล้ว ({currentEntry.fishList.length} ชนิด)
+      {/* Fish List */}
+      {currentEntry.fishList.length > 0 && (
+        <Panel title={`รายการปลาที่บันทึกแล้ว (${currentEntry.fishList.length} ชนิด)`}>
+          {/* Summary */}
+          <View style={styles.summaryContainer}>
+            <Text variant="bodyMedium" style={styles.summaryText}>
+              จำนวนรวม: {getTotalCount()} ตัว
+            </Text>
+            <Text variant="bodyMedium" style={styles.summaryText}>
+              น้ำหนักรวม: {getTotalWeight()} กก.
+            </Text>
+            <Text variant="bodyMedium" style={styles.summaryText}>
+              มูลค่ารวม: {getTotalValue()} บาท
+            </Text>
+          </View>
+
+          <Divider style={styles.divider} />
+
+          {currentEntry.fishList.map((fish, index) => (
+            <View key={fish.id} style={styles.fishItem}>
+              <List.Item
+                title={fish.name}
+                description={`${fish.count} ตัว | ${fish.weight} กก. | ${fish.price} บาท`}
+                left={() => <List.Icon icon="fish" color={colors.riverMid} />}
+                right={() => (
+                  <IconButton
+                    icon="delete"
+                    size={20}
+                    onPress={() => handleRemoveFish(index)}
+                    iconColor={colors.clay}
+                  />
+                )}
+                titleStyle={styles.listItemTitle}
+                descriptionStyle={styles.listItemDescription}
+                style={styles.listItem}
+              />
+
+              {(fish.minLength !== '0' || fish.maxLength !== '0') && (
+                <Text variant="bodySmall" style={styles.lengthInfo}>
+                  ความยาว: {fish.minLength} - {fish.maxLength} ซม.
                 </Text>
+              )}
 
-                {/* Summary */}
-                <View style={styles.summaryContainer}>
-                  <Text variant="bodyMedium" style={styles.summaryText}>
-                    จำนวนรวม: {getTotalCount()} ตัว
-                  </Text>
-                  <Text variant="bodyMedium" style={styles.summaryText}>
-                    น้ำหนักรวม: {getTotalWeight()} กก.
-                  </Text>
-                  <Text variant="bodyMedium" style={styles.summaryText}>
-                    มูลค่ารวม: {getTotalValue()} บาท
-                  </Text>
-                </View>
+              {index < currentEntry.fishList.length - 1 && (
+                <Divider style={styles.itemDivider} />
+              )}
+            </View>
+          ))}
+        </Panel>
+      )}
 
-                <Divider style={styles.divider} />
+      {/* Empty State */}
+      {currentEntry.fishList.length === 0 && (
+        <Panel>
+          <View style={styles.emptyState}>
+            <Text variant="bodyLarge" style={styles.emptyStateText}>
+              ยังไม่มีรายการปลา
+            </Text>
+            <Text variant="bodyMedium" style={styles.emptyStateSubtext}>
+              กรอกข้อมูลปลาด้านบนแล้วกด "เพิ่มปลาชนิดนี้"
+            </Text>
+          </View>
+        </Panel>
+      )}
 
-                {currentEntry.fishList.map((fish, index) => (
-                  <View key={fish.id} style={styles.fishItem}>
-                    <List.Item
-                      title={fish.name}
-                      description={`${fish.count} ตัว | ${fish.weight} กก. | ${fish.price} บาท`}
-                      left={() => <List.Icon icon="fish" />}
-                      right={() => (
-                        <IconButton
-                          icon="delete"
-                          size={20}
-                          onPress={() => handleRemoveFish(index)}
-                          iconColor="#f44336"
-                        />
-                      )}
-                      style={styles.listItem}
-                    />
-                    
-                    {(fish.minLength !== '0' || fish.maxLength !== '0') && (
-                      <Text variant="bodySmall" style={styles.lengthInfo}>
-                        ความยาว: {fish.minLength} - {fish.maxLength} ซม.
-                      </Text>
-                    )}
-                    
-                    {index < currentEntry.fishList.length - 1 && (
-                      <Divider style={styles.itemDivider} />
-                    )}
-                  </View>
-                ))}
-              </Card.Content>
-            </Card>
-          )}
-
-          {/* Empty State */}
-          {currentEntry.fishList.length === 0 && (
-            <Card style={styles.card}>
-              <Card.Content>
-                <View style={styles.emptyState}>
-                  <Text variant="bodyLarge" style={styles.emptyStateText}>
-                    ยังไม่มีรายการปลา
-                  </Text>
-                  <Text variant="bodyMedium" style={styles.emptyStateSubtext}>
-                    กรอกข้อมูลปลาด้านบนแล้วกด "เพิ่มปลาชนิดนี้"
-                  </Text>
-                </View>
-              </Card.Content>
-            </Card>
-          )}
-
-          {/* Continue Button */}
-          <Button
-            mode="contained"
-            icon="arrow-right"
-            onPress={handleContinue}
-            style={styles.continueButton}
-            contentStyle={styles.continueButtonContent}
-          >
-            ไปหน้าสรุป
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
+      {/* Continue Button */}
+      <PrimaryButton
+        variant="simple"
+        title="ไปหน้าสรุป"
+        icon="arrow-right"
+        onPress={handleContinue}
+        style={styles.continueSpacing}
+      />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  scrollView: {
-    flex: 1,
-  },
   content: {
-    padding: 16,
-  },
-  card: {
-    marginBottom: 16,
-    elevation: 2,
-  },
-  sectionTitle: {
-    marginBottom: 16,
-    fontWeight: 'bold',
-    color: '#2196F3',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
   selectedFishInfo: {
-    backgroundColor: '#e3f2fd',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: colors.tealWash,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
   },
   selectedFishRow: {
     flexDirection: 'row',
@@ -561,65 +534,62 @@ const styles = StyleSheet.create({
   },
   selectedFishTextContainer: {
     flex: 1,
-    marginRight: 8,
-  },
-  selectedFishLabel: {
-    color: '#666',
-    marginBottom: 4,
+    marginRight: spacing.sm,
   },
   selectedFishName: {
-    fontWeight: 'bold',
-    color: '#1976d2',
+    fontWeight: '800',
+    color: colors.riverDeep,
   },
   localNameLabel: {
-    color: '#666',
-    marginTop: 8,
+    color: colors.inkSoft,
+    marginTop: spacing.sm,
     marginBottom: 2,
     fontSize: 12,
   },
   localNameText: {
-    color: '#333',
+    color: colors.ink,
     fontStyle: 'italic',
   },
   changeButton: {
-    borderColor: '#2196F3',
+    borderColor: colors.riverMid,
   },
   noFishSelected: {
-    backgroundColor: '#fff3e0',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: 'rgba(232,163,61,0.14)',
+    padding: spacing.lg,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
     alignItems: 'center',
   },
   noFishText: {
-    color: '#e65100',
+    color: colors.ink,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   selectFishButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: colors.riverDeep,
   },
   unknownFishContainer: {
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
     alignItems: 'center',
   },
   unknownFishButton: {
-    borderColor: '#FF9800',
+    borderColor: colors.gold,
     minWidth: 200,
   },
   unknownFishButtonActive: {
-    backgroundColor: '#FF9800',
+    backgroundColor: colors.gold,
   },
   unknownFishButtonLabel: {
     fontSize: 16,
   },
   input: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
+    backgroundColor: colors.white,
   },
   requiredNote: {
-    color: '#f44336',
-    marginBottom: 8,
+    color: colors.clay,
+    marginBottom: spacing.sm,
     fontStyle: 'italic',
   },
   row: {
@@ -630,75 +600,83 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   lengthTitle: {
-    marginBottom: 8,
-    marginTop: 4,
-    fontWeight: '500',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+    fontWeight: '600',
+    color: colors.ink,
   },
   addButton: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   summaryContainer: {
-    backgroundColor: '#e3f2fd',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: colors.tealWash,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
   },
   summaryText: {
     marginBottom: 4,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: colors.riverDeep,
   },
   divider: {
-    marginVertical: 8,
+    marginVertical: spacing.sm,
+    backgroundColor: colors.hairline,
   },
   fishItem: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   listItem: {
     paddingHorizontal: 0,
   },
+  listItemTitle: {
+    fontWeight: '800',
+    color: colors.ink,
+  },
+  listItemDescription: {
+    color: colors.inkSoft,
+  },
   lengthInfo: {
     marginLeft: 56,
-    color: '#666',
+    color: colors.inkSoft,
     marginTop: -8,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   itemDivider: {
-    marginTop: 8,
+    marginTop: spacing.sm,
+    backgroundColor: colors.hairline,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: spacing.xxl,
   },
   emptyStateText: {
-    color: '#666',
-    marginBottom: 8,
+    color: colors.ink,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   emptyStateSubtext: {
-    color: '#999',
+    color: colors.inkSoft,
     textAlign: 'center',
   },
-  continueButton: {
-    marginTop: 24,
-    marginBottom: 32,
-    backgroundColor: '#2196F3',
-  },
-  continueButtonContent: {
-    paddingVertical: 8,
+  continueSpacing: {
+    marginTop: spacing.xxl,
   },
   photoTitle: {
-    marginBottom: 8,
-    marginTop: 4,
-    fontWeight: '500',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+    fontWeight: '600',
+    color: colors.ink,
   },
   photoContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   fishPhoto: {
     width: '100%',
     height: 200,
-    borderRadius: 8,
-    marginBottom: 12,
+    borderRadius: radius.sm,
+    marginBottom: spacing.md,
   },
   photoActions: {
     flexDirection: 'row',
@@ -711,16 +689,16 @@ const styles = StyleSheet.create({
   photoPlaceholder: {
     height: 120,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: colors.hairline,
     borderStyle: 'dashed',
-    borderRadius: 8,
+    borderRadius: radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    backgroundColor: '#fafafa',
+    marginBottom: spacing.lg,
+    backgroundColor: colors.sand,
   },
   photoPlaceholderText: {
-    color: '#666',
-    marginTop: 8,
+    color: colors.inkSoft,
+    marginTop: spacing.sm,
   },
 });

@@ -1,10 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import {
   Button,
-  Card,
   Text,
   List,
   Searchbar,
@@ -16,6 +14,10 @@ import {
 } from 'react-native-paper';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { useAuth } from '../contexts/AuthContext';
+import ScreenContainer from '../components/ScreenContainer';
+import CurvedHeader from '../components/CurvedHeader';
+import Panel from '../components/Panel';
+import { colors, spacing, radius } from '../theme';
 
 const WATER_SOURCE_LABELS = {
   'mekong': 'แม่น้ำโขง',
@@ -25,10 +27,8 @@ const WATER_SOURCE_LABELS = {
 };
 
 export default function HistoryScreen({ navigation }) {
-  const tabBarHeight = useBottomTabBarHeight();
-  const { fishingHistory, syncWithFirebase } = useFishingData();
+  const { fishingHistory } = useFishingData();
   const { user, selectedFisher, isResearcher } = useAuth();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filter fishing history based on selected fisher or current user
   const getFilteredByUser = () => {
@@ -59,26 +59,6 @@ export default function HistoryScreen({ navigation }) {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [sortBy, setSortBy] = useState('date'); // date, fishCount, weight
   const [showSortMenu, setShowSortMenu] = useState(false);
-
-  // ฟังก์ชันสำหรับกดปุ่ม refresh
-  const handleRefresh = async () => {
-    if (isRefreshing) return; // ป้องกันการกด refresh ซ้ำ
-
-    setIsRefreshing(true);
-    if (__DEV__) console.log('🔄 HistoryScreen: Manual refresh triggered...');
-
-    try {
-      if (syncWithFirebase) {
-        await syncWithFirebase();
-      }
-    } catch (error) {
-      console.error('Error refreshing:', error);
-    } finally {
-      setTimeout(() => {
-        setIsRefreshing(false);
-      }, 1000);
-    }
-  };
 
   // Disable back button functionality
   useFocusEffect(
@@ -291,9 +271,12 @@ export default function HistoryScreen({ navigation }) {
       const monthName = thaiFullMonths[date.getMonth()];
       const year = date.getFullYear() + 543;
       const month = `${monthName} ${year}`;
-      
+      // sortKey เรียงตามเวลาได้จริง (key เป็นภาษาไทย new Date() parse ไม่ได้)
+      const sortKey = date.getFullYear() * 12 + date.getMonth();
+
       if (!monthlyData[month]) {
         monthlyData[month] = {
+          sortKey,
           entries: 0,
           species: 0,
           totalFish: 0,
@@ -316,7 +299,7 @@ export default function HistoryScreen({ navigation }) {
     });
 
     return Object.entries(monthlyData)
-      .sort(([a], [b]) => new Date(b) - new Date(a))
+      .sort(([, a], [, b]) => b.sortKey - a.sortKey) // เดือนล่าสุดก่อน
       .slice(0, 3); // Show last 3 months
   };
 
@@ -328,6 +311,10 @@ export default function HistoryScreen({ navigation }) {
 
   if (userHistory.length === 0) {
     return (
+      <ScreenContainer
+        header={<CurvedHeader title="ประวัติการจับปลา" />}
+        scroll={false}
+      >
       <View style={styles.emptyContainer}>
         <Text variant="headlineSmall" style={styles.emptyTitle}>
           {isResearcher && !selectedFisher
@@ -343,36 +330,34 @@ export default function HistoryScreen({ navigation }) {
           mode="contained"
           onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}
           style={styles.emptyButton}
+          buttonColor={colors.riverDeep}
           icon="plus"
         >
           เริ่มบันทึกการจับปลา
         </Button>
       </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}>
-        <View style={styles.content}>
-          {/* Search and Sort with Refresh */}
+    <>
+      <ScreenContainer
+        header={<CurvedHeader title="ประวัติการจับปลา" />}
+        contentContainerStyle={styles.content}
+      >
+          {/* Search and Sort (ข้อมูล realtime จาก Firebase — ไม่ต้องรีเฟรชเอง) */}
           <View style={styles.headerContainer}>
             <Searchbar
               placeholder="ค้นหาตามวันที่หรือชื่อปลา"
               onChangeText={setSearchQuery}
               value={searchQuery}
               style={styles.searchBar}
+              inputStyle={styles.searchInput}
+              iconColor={colors.inkSoft}
             />
 
             <View style={styles.actionButtons}>
-              <IconButton
-                icon="refresh"
-                mode="contained"
-                size={24}
-                onPress={handleRefresh}
-                disabled={isRefreshing}
-                animated
-              />
               <Menu
                 visible={showSortMenu}
                 onDismiss={() => setShowSortMenu(false)}
@@ -380,6 +365,7 @@ export default function HistoryScreen({ navigation }) {
                   <IconButton
                     icon="sort"
                     size={24}
+                    iconColor={colors.riverDeep}
                     onPress={toggleSortMenu}
                   />
                 }
@@ -405,11 +391,7 @@ export default function HistoryScreen({ navigation }) {
 
           {/* Monthly Statistics */}
           {monthlyStats.length > 0 && (
-            <Card style={styles.card}>
-              <Card.Content>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  สถิติรายเดือน
-                </Text>
+            <Panel title="สถิติรายเดือน">
                 {monthlyStats.map(([month, stats]) => (
                   <View key={month} style={styles.monthStatsContainer}>
                     <Text variant="titleSmall" style={styles.monthTitle}>
@@ -451,17 +433,11 @@ export default function HistoryScreen({ navigation }) {
                     </View>
                   </View>
                 ))}
-              </Card.Content>
-            </Card>
+            </Panel>
           )}
 
           {/* History List */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                ประวัติการจับปลา ({filteredHistory.length} รายการ)
-              </Text>
-              
+          <Panel title={`ประวัติการจับปลา (${filteredHistory.length} รายการ)`}>
               {filteredHistory.map((entry) => (
                 <List.Item
                   key={entry.id}
@@ -474,11 +450,13 @@ export default function HistoryScreen({ navigation }) {
                   left={() =>
                     <List.Icon
                       icon={entry.noFishing ? 'cancel' : 'fish'}
-                      color={entry.noFishing ? '#f44336' : '#4caf50'}
+                      color={entry.noFishing ? colors.clay : colors.riverMid}
                     />
                   }
-                  right={() => <List.Icon icon="chevron-right" />}
+                  right={() => <List.Icon icon="chevron-right" color={colors.inkSoft} />}
                   onPress={() => handleEntryPress(entry)}
+                  titleStyle={styles.historyItemTitle}
+                  descriptionStyle={styles.historyItemDescription}
                   style={styles.historyItem}
                 />
               ))}
@@ -493,20 +471,19 @@ export default function HistoryScreen({ navigation }) {
                   </Text>
                 </View>
               )}
-            </Card.Content>
-          </Card>
+          </Panel>
 
           {/* Home Button */}
           <Button
             mode="outlined"
             onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}
             style={styles.homeButton}
+            textColor={colors.riverMid}
             icon="home"
           >
             หน้าแรก
           </Button>
-        </View>
-      </ScrollView>
+      </ScreenContainer>
 
       {/* Detail Dialog */}
       <Portal>
@@ -621,57 +598,52 @@ export default function HistoryScreen({ navigation }) {
             </ScrollView>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowDetailDialog(false)}>ปิด</Button>
+            <Button textColor={colors.riverMid} onPress={() => setShowDetailDialog(false)}>ปิด</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
   content: {
-    padding: 16,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   searchBar: {
     flex: 1,
-    marginRight: 8,
+    marginRight: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    elevation: 0,
+  },
+  searchInput: {
+    color: colors.ink,
   },
   actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  card: {
-    marginBottom: 16,
-    elevation: 2,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    fontWeight: 'bold',
-    color: '#2196F3',
-  },
   monthStatsContainer: {
-    marginBottom: 16,
-    paddingBottom: 12,
+    marginBottom: spacing.lg,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.hairline,
   },
   monthTitle: {
-    fontWeight: 'bold',
-    color: '#2196F3',
-    marginBottom: 8,
+    fontWeight: '800',
+    color: colors.riverDeep,
+    marginBottom: spacing.sm,
   },
   monthStatsGrid: {
-    paddingTop: 4,
+    paddingTop: spacing.xs,
   },
   monthStatRow: {
     flexDirection: 'row',
@@ -679,122 +651,120 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    borderBottomColor: colors.sand,
   },
   monthStatLabel: {
-    color: '#666',
+    color: colors.inkSoft,
   },
   monthStatValue: {
-    fontWeight: 'bold',
-    color: '#2196F3',
-  },
-  monthStats: {
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statText: {
-    color: '#666',
+    fontWeight: '800',
+    color: colors.riverDeep,
   },
   historyItem: {
     paddingHorizontal: 0,
   },
+  historyItemTitle: {
+    fontWeight: '800',
+    color: colors.ink,
+  },
+  historyItemDescription: {
+    color: colors.inkSoft,
+  },
   noResults: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: spacing.xxl,
   },
   noResultsText: {
-    color: '#666',
-    marginBottom: 8,
+    color: colors.ink,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
   },
   noResultsSubtext: {
-    color: '#999',
+    color: colors.inkSoft,
     textAlign: 'center',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: spacing.xxl,
   },
   emptyTitle: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     textAlign: 'center',
-    color: '#666',
+    color: colors.ink,
+    fontWeight: '800',
   },
   emptySubtitle: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
     textAlign: 'center',
-    color: '#999',
+    color: colors.inkSoft,
   },
   emptyButton: {
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.xxl,
   },
   homeButton: {
-    marginTop: 24,
-    marginBottom: 32,
-    borderColor: '#2196F3',
+    marginTop: spacing.xxl,
+    borderColor: colors.riverMid,
   },
   dialog: {
     maxHeight: '80%',
-    marginHorizontal: 20,
+    marginHorizontal: spacing.xl,
+    backgroundColor: colors.surface,
   },
   dialogContent: {
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   dialogDate: {
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#2196F3',
+    fontWeight: '800',
+    marginBottom: spacing.lg,
+    color: colors.riverDeep,
   },
   noFishingChip: {
     alignSelf: 'flex-start',
-    backgroundColor: '#ffeb3b',
+    backgroundColor: 'rgba(232,163,61,0.18)',
   },
   dialogSection: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   dialogSectionTitle: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#2196F3',
+    fontWeight: '800',
+    marginBottom: spacing.sm,
+    color: colors.riverDeep,
   },
   fishDetailItem: {
-    marginBottom: 8,
-    paddingLeft: 8,
+    marginBottom: spacing.sm,
+    paddingLeft: spacing.sm,
   },
   fishName: {
-    fontWeight: '500',
+    fontWeight: '600',
+    color: colors.ink,
   },
   fishDetails: {
-    color: '#666',
+    color: colors.inkSoft,
     marginTop: 2,
   },
   gearItem: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   gearName: {
-    fontWeight: '500',
-    color: '#333',
+    fontWeight: '600',
+    color: colors.ink,
   },
   gearDetails: {
-    color: '#666',
+    color: colors.inkSoft,
     marginTop: 2,
-    marginLeft: 16,
+    marginLeft: spacing.lg,
     fontStyle: 'italic',
   },
   totalSummary: {
-    backgroundColor: '#e3f2fd',
-    padding: 8,
-    borderRadius: 4,
-    marginTop: 8,
+    backgroundColor: colors.tealWash,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    marginTop: spacing.sm,
   },
   totalText: {
-    fontWeight: '500',
+    fontWeight: '700',
+    color: colors.riverDeep,
   },
 });

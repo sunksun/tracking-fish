@@ -1,29 +1,17 @@
-import { View, StyleSheet, ScrollView, Alert, Pressable } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { Button, Text, Icon } from 'react-native-paper';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { useAuth } from '../contexts/AuthContext';
-
-// River-inspired palette (Mekong): deep water teal, sunlit gold, riverbank sand
-const colors = {
-  riverDeep: '#0E4D5C',
-  riverMid: '#1B7A8C',
-  gold: '#E8A33D',
-  sand: '#F2EDE4',
-  surface: '#FBF9F5',
-  clay: '#C65A3A',
-  ink: '#123038',
-  inkSoft: '#5A6B70',
-  hairline: '#E3DCCF',
-};
+import { colors } from '../theme';
+import ScreenContainer from '../components/ScreenContainer';
+import CurvedHeader from '../components/CurvedHeader';
+import StatTile from '../components/StatTile';
+import PrimaryButton from '../components/PrimaryButton';
 
 export default function HomeScreen({ navigation }) {
   const { fishingHistory } = useFishingData();
   const { user, selectedFisher, isResearcher, signOut, clearSelectedFisher } = useAuth();
-  const tabBarHeight = useBottomTabBarHeight();
-  const insets = useSafeAreaInsets();
 
   // Filter fishing history based on selected fisher or current user
   // ใช้ useMemo เพื่อลด re-render และ log ที่ซ้ำ
@@ -218,29 +206,27 @@ export default function HomeScreen({ navigation }) {
     ? [user.village, user.district, user.province].filter(Boolean).join(' · ')
     : null;
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
-      showsVerticalScrollIndicator={false}
-    >
+  const header = (
+    <CurvedHeader showBack={false}>
       {/* ── Header band: deep river water, curved like a riverbank ── */}
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.greeting}>ยินดีต้อนรับ</Text>
-        <Text style={styles.userName}>{getUserDisplayName()}</Text>
-        <View style={styles.rolePill}>
-          <View style={styles.roleDot} />
-          <Text style={styles.roleText}>{roleLabel}</Text>
-        </View>
-        {place && <Text style={styles.placeText}>{place}</Text>}
-        {user?.occupation ? (
-          <Text style={styles.placeText}>
-            {user.occupation}
-            {user.experience ? `  ·  ประสบการณ์ ${user.experience}` : ''}
-          </Text>
-        ) : null}
+      <Text style={styles.greeting}>ยินดีต้อนรับ</Text>
+      <Text style={styles.userName}>{getUserDisplayName()}</Text>
+      <View style={styles.rolePill}>
+        <View style={styles.roleDot} />
+        <Text style={styles.roleText}>{roleLabel}</Text>
       </View>
+      {place && <Text style={styles.placeText}>{place}</Text>}
+      {user?.occupation ? (
+        <Text style={styles.placeText}>
+          {user.occupation}
+          {user.experience ? `  ·  ประสบการณ์ ${user.experience}` : ''}
+        </Text>
+      ) : null}
+    </CurvedHeader>
+  );
 
+  return (
+    <ScreenContainer header={header}>
       <View style={styles.body}>
         {/* ── Researcher: which fisher's data am I viewing ── */}
         {isResearcher && (
@@ -317,20 +303,13 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* ── Primary action ── */}
-        <Pressable
+        <PrimaryButton
+          icon="plus"
+          title="เริ่มบันทึกการจับปลา"
+          subtitle="จดข้อมูลการจับปลาของวันนี้"
           onPress={handleStartRecording}
-          style={({ pressed }) => [styles.primaryAction, pressed && styles.primaryActionPressed]}
-          android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
-        >
-          <View style={styles.primaryIcon}>
-            <Icon source="plus" size={26} color={colors.surface} />
-          </View>
-          <View style={styles.primaryTextWrap}>
-            <Text style={styles.primaryTitle}>เริ่มบันทึกการจับปลา</Text>
-            <Text style={styles.primarySub}>จดข้อมูลการจับปลาของวันนี้</Text>
-          </View>
-          <Icon source="chevron-right" size={26} color="rgba(251,249,245,0.7)" />
-        </Pressable>
+          style={styles.primaryActionSpacing}
+        />
 
         {/* ── Recent entries as a timeline ── */}
         {hasData && (
@@ -375,39 +354,11 @@ export default function HomeScreen({ navigation }) {
           ออกจากระบบ
         </Button>
       </View>
-    </ScrollView>
-  );
-}
-
-// Big number first, small label underneath — the number carries the page
-function StatTile({ value, unit, label, accent, big }) {
-  return (
-    <View style={styles.statTile}>
-      <View style={styles.statValueRow}>
-        <Text style={[styles.statValue, big && styles.statValueBig, { color: accent }]}>
-          {value}
-        </Text>
-        <Text style={styles.statUnit}>{unit}</Text>
-      </View>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.sand,
-  },
-
-  // Header band
-  header: {
-    backgroundColor: colors.riverDeep,
-    paddingBottom: 28,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-  },
   greeting: {
     color: 'rgba(242,237,228,0.75)',
     fontSize: 15,
@@ -536,73 +487,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 26,
   },
-  statTile: {
-    width: '48%',
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-  },
-  statValueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  statValue: {
-    fontSize: 26,
-    fontWeight: '800',
-  },
-  statValueBig: {
-    fontSize: 36,
-  },
-  statUnit: {
-    color: colors.inkSoft,
-    fontSize: 13,
-    fontWeight: '600',
-    marginLeft: 5,
-  },
-  statLabel: {
-    color: colors.inkSoft,
-    fontSize: 13,
-    marginTop: 6,
-  },
 
   // Primary action
-  primaryAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.riverDeep,
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
+  primaryActionSpacing: {
     marginBottom: 28,
-  },
-  primaryActionPressed: {
-    backgroundColor: '#0A3B46',
-  },
-  primaryIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: 'rgba(232,163,61,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  primaryTextWrap: {
-    flex: 1,
-  },
-  primaryTitle: {
-    color: colors.surface,
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  primarySub: {
-    color: 'rgba(242,237,228,0.72)',
-    fontSize: 13,
-    marginTop: 2,
   },
 
   // Timeline

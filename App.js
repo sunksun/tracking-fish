@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
+import { paperTheme, colors } from './src/theme';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { FishingDataProvider } from './src/contexts/FishingDataContext';
 import SimpleLoginScreen from './src/screens/SimpleLoginScreen';
@@ -21,14 +22,9 @@ import HistoryScreen from './src/screens/HistoryScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// สีหลักของแอป
-const BRAND = '#2196F3';
-
-// header theme ที่ทุก stack ใช้ร่วมกัน (คงของเดิม)
+// ทุกหน้าใช้ CurvedHeader ของตัวเอง → ปิด native header ทั้งหมด
 const stackScreenOptions = {
-  headerStyle: { backgroundColor: BRAND },
-  headerTintColor: '#fff',
-  headerTitleStyle: { fontWeight: 'bold' },
+  headerShown: false,
 };
 
 // ----- Stack ของแต่ละแท็บ -----
@@ -40,12 +36,12 @@ function HomeStack() {
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: 'จำแนกและติดตามปลาแม่น้ำโขง' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="SelectFisher"
         component={SelectFisherScreen}
-        options={{ title: 'เลือกชาวประมง' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -58,7 +54,7 @@ function ClassifyStack() {
       <Stack.Screen
         name="SelectFishSpecies"
         component={SelectFishSpeciesScreen}
-        options={{ title: 'จำแนกชนิดปลา' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -72,22 +68,22 @@ function RecordStack() {
       <Stack.Screen
         name="DataEntry"
         component={DataEntryScreen}
-        options={{ title: 'บันทึกข้อมูลการจับปลา' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="AddFish"
         component={AddFishScreen}
-        options={{ title: 'เพิ่มรายการปลา' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="SelectFishSpecies"
         component={SelectFishSpeciesScreen}
-        options={{ title: 'เลือกชนิดปลา' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Summary"
         component={SummaryScreen}
-        options={{ title: 'สรุปและยืนยันข้อมูล' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -100,7 +96,7 @@ function HistoryStack() {
       <Stack.Screen
         name="History"
         component={HistoryScreen}
-        options={{ title: 'ประวัติการจับปลา' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -122,9 +118,13 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: BRAND,
-        tabBarInactiveTintColor: '#9e9e9e',
+        tabBarActiveTintColor: colors.riverMid,
+        tabBarInactiveTintColor: colors.inkSoft,
         tabBarLabelStyle: { fontSize: 12 },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.hairline,
+        },
       }}
     >
       <Tab.Screen
@@ -196,7 +196,7 @@ function AppNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <PaperProvider>
+      <PaperProvider theme={paperTheme}>
         <AuthProvider>
           <FishingDataProvider>
             <AppNavigator />

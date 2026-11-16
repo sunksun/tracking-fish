@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import {
   Button,
   Text,
-  Card,
   Searchbar,
   ActivityIndicator,
   List,
@@ -13,6 +12,10 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 import { FirebaseService } from '../services/FirebaseService';
+import ScreenContainer from '../components/ScreenContainer';
+import CurvedHeader from '../components/CurvedHeader';
+import Panel from '../components/Panel';
+import { colors, spacing, radius } from '../theme';
 
 export default function SelectFisherScreen({ navigation }) {
   const { user, selectFisher, selectedFisher } = useAuth();
@@ -144,57 +147,55 @@ export default function SelectFisherScreen({ navigation }) {
     return parts.join(' • ');
   };
 
+  const header = (
+    <CurvedHeader
+      eyebrow="นักวิจัย"
+      title="เลือกชาวประมง"
+      subtitle={`บันทึกในนาม: ${user?.name || 'นักวิจัย'}`}
+    />
+  );
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>กำลังโหลดข้อมูลชาวประมง...</Text>
-      </View>
+      <ScreenContainer header={header} scroll={false}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.riverMid} />
+          <Text style={styles.loadingText}>กำลังโหลดข้อมูลชาวประมง...</Text>
+        </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header Card */}
-      <Card style={styles.headerCard}>
-        <Card.Content>
-          <View style={styles.headerTitleRow}>
-            <Text variant="titleMedium" style={styles.headerTitle}>
-              เลือกชาวประมงที่ต้องการบันทึกข้อมูล
-            </Text>
-            <Button
-              mode="text"
-              compact
-              onPress={async () => {
-                // ล้าง cache และโหลดใหม่
-                await AsyncStorage.removeItem('fisher_list_cache');
-                await AsyncStorage.removeItem('fisher_list_cache_time');
-                loadFishers();
-              }}
-              style={styles.refreshButton}
-            >
-              รีเฟรช
-            </Button>
-          </View>
+    <ScreenContainer header={header} contentContainerStyle={styles.content}>
+      {/* สรุปจำนวน + รีเฟรช */}
+      <View style={styles.summaryRow}>
+        <Text style={styles.fisherCount}>
+          พบ {fishers.length} คน
+          {searchQuery ? ` (กรอง ${filteredFishers.length} คน)` : ''}
+        </Text>
+        <Button
+          mode="text"
+          compact
+          textColor={colors.riverMid}
+          onPress={async () => {
+            await AsyncStorage.removeItem('fisher_list_cache');
+            await AsyncStorage.removeItem('fisher_list_cache_time');
+            loadFishers();
+          }}
+        >
+          รีเฟรช
+        </Button>
+      </View>
 
-          <Text variant="bodySmall" style={styles.fisherCount}>
-            พบ {fishers.length} คน
-            {searchQuery && ` (กรอง ${filteredFishers.length} คน)`}
+      {selectedFisher && (
+        <View style={styles.currentSelection}>
+          <Icon source="check-circle" size={20} color={colors.riverMid} />
+          <Text style={styles.currentSelectionText}>
+            กำลังบันทึกให้: {selectedFisher.name}
           </Text>
-
-          <Text variant="bodyMedium" style={styles.headerSubtitle}>
-            คุณกำลังบันทึกในนาม: {user?.name || 'นักวิจัย'}
-          </Text>
-          {selectedFisher && (
-            <View style={styles.currentSelection}>
-              <Icon source="check-circle" size={20} color="#4caf50" />
-              <Text variant="bodyMedium" style={styles.currentSelectionText}>
-                กำลังบันทึกให้: {selectedFisher.name}
-              </Text>
-            </View>
-          )}
-        </Card.Content>
-      </Card>
+        </View>
+      )}
 
       {/* Search Bar */}
       <Searchbar
@@ -202,194 +203,165 @@ export default function SelectFisherScreen({ navigation }) {
         onChangeText={setSearchQuery}
         value={searchQuery}
         style={styles.searchBar}
+        inputStyle={styles.searchInput}
+        iconColor={colors.inkSoft}
       />
 
       {/* Fisher List */}
-      <ScrollView style={styles.listContainer}>
-        {filteredFishers.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <Card.Content>
-              <View style={styles.emptyState}>
-                <Icon source="account-search" size={60} color="#999" />
-                <Text variant="titleMedium" style={styles.emptyTitle}>
-                  {searchQuery ? 'ไม่พบข้อมูลชาวประมง' : 'ยังไม่มีข้อมูลชาวประมง'}
-                </Text>
-                <Text variant="bodyMedium" style={styles.emptySubtitle}>
-                  {searchQuery
-                    ? 'ลองค้นหาด้วยคำอื่น'
-                    : 'กรุณาติดต่อผู้ดูแลระบบเพื่อเพิ่มข้อมูลชาวประมง'}
-                </Text>
-              </View>
-            </Card.Content>
-          </Card>
-        ) : (
-          <Card style={styles.listCard}>
-            <Card.Content style={styles.listCardContent}>
-              {filteredFishers.map((fisher, index) => (
-                <React.Fragment key={fisher.id}>
-                  <List.Item
-                    title={fisher.name || 'ไม่ระบุชื่อ'}
-                    description={getFisherDescription(fisher)}
-                    right={(props) => (
-                      <Button
-                        {...props}
-                        mode={
-                          selectedFisher?.id === fisher.id
-                            ? 'contained'
-                            : 'outlined'
-                        }
-                        onPress={() => handleSelectFisher(fisher)}
-                        compact
-                        style={styles.selectButton}
-                      >
-                        {selectedFisher?.id === fisher.id ? 'เลือกแล้ว' : 'เลือก'}
-                      </Button>
-                    )}
-                    style={[
-                      styles.listItem,
-                      selectedFisher?.id === fisher.id && styles.selectedListItem
-                    ]}
-                    titleStyle={styles.listItemTitle}
-                    descriptionStyle={styles.listItemDescription}
-                    descriptionNumberOfLines={2}
-                  />
-                  {index < filteredFishers.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </Card.Content>
-          </Card>
-        )}
+      {filteredFishers.length === 0 ? (
+        <Panel>
+          <View style={styles.emptyState}>
+            <Icon source="account-search" size={56} color={colors.inkSoft} />
+            <Text style={styles.emptyTitle}>
+              {searchQuery ? 'ไม่พบข้อมูลชาวประมง' : 'ยังไม่มีข้อมูลชาวประมง'}
+            </Text>
+            <Text style={styles.emptySubtitle}>
+              {searchQuery
+                ? 'ลองค้นหาด้วยคำอื่น'
+                : 'กรุณาติดต่อผู้ดูแลระบบเพื่อเพิ่มข้อมูลชาวประมง'}
+            </Text>
+          </View>
+        </Panel>
+      ) : (
+        <Panel style={styles.listPanel}>
+          {filteredFishers.map((fisher, index) => (
+            <React.Fragment key={fisher.id}>
+              <List.Item
+                title={fisher.name || 'ไม่ระบุชื่อ'}
+                description={getFisherDescription(fisher)}
+                right={(props) => (
+                  <Button
+                    {...props}
+                    mode={selectedFisher?.id === fisher.id ? 'contained' : 'outlined'}
+                    onPress={() => handleSelectFisher(fisher)}
+                    buttonColor={selectedFisher?.id === fisher.id ? colors.riverDeep : undefined}
+                    textColor={selectedFisher?.id === fisher.id ? colors.surface : colors.riverMid}
+                    compact
+                    style={styles.selectButton}
+                  >
+                    {selectedFisher?.id === fisher.id ? 'เลือกแล้ว' : 'เลือก'}
+                  </Button>
+                )}
+                style={[
+                  styles.listItem,
+                  selectedFisher?.id === fisher.id && styles.selectedListItem
+                ]}
+                titleStyle={styles.listItemTitle}
+                descriptionStyle={styles.listItemDescription}
+                descriptionNumberOfLines={2}
+              />
+              {index < filteredFishers.length - 1 && <Divider style={styles.divider} />}
+            </React.Fragment>
+          ))}
+        </Panel>
+      )}
 
-        {/* Back Button */}
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="outlined"
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-            icon="arrow-left"
-          >
-            กลับ
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
+      {/* Back Button */}
+      <Button
+        mode="outlined"
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+        textColor={colors.riverMid}
+        icon="arrow-left"
+      >
+        กลับ
+      </Button>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+  content: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
-    marginTop: 16,
-    color: '#666',
+    marginTop: spacing.lg,
+    color: colors.inkSoft,
   },
-  headerCard: {
-    margin: 16,
-    marginBottom: 8,
-    elevation: 4,
-  },
-  headerTitleRow: {
+  summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  headerTitle: {
-    fontWeight: 'bold',
-    color: '#2196F3',
-    flex: 1,
-  },
-  refreshButton: {
-    marginRight: -8,
+    marginBottom: spacing.sm,
   },
   fisherCount: {
-    color: '#666',
-    marginBottom: 8,
-    fontStyle: 'italic',
-  },
-  headerSubtitle: {
-    color: '#666',
-    marginBottom: 8,
+    color: colors.inkSoft,
+    fontSize: 14,
   },
   currentSelection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    padding: 8,
-    backgroundColor: '#e8f5e9',
-    borderRadius: 8,
+    marginBottom: spacing.md,
+    padding: spacing.sm,
+    backgroundColor: colors.tealWash,
+    borderRadius: radius.md,
   },
   currentSelectionText: {
-    marginLeft: 8,
-    color: '#2e7d32',
-    fontWeight: 'bold',
+    marginLeft: spacing.sm,
+    color: colors.riverDeep,
+    fontWeight: '700',
   },
   searchBar: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    elevation: 2,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    elevation: 0,
   },
-  listContainer: {
-    flex: 1,
+  searchInput: {
+    color: colors.ink,
   },
-  listCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    elevation: 2,
-  },
-  listCardContent: {
+  listPanel: {
     padding: 0,
+    overflow: 'hidden',
   },
   listItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   selectedListItem: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: colors.tealWash,
   },
   listItemTitle: {
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 16,
+    color: colors.ink,
   },
   listItemDescription: {
     fontSize: 13,
     marginTop: 4,
+    color: colors.inkSoft,
+  },
+  divider: {
+    backgroundColor: colors.hairline,
   },
   selectButton: {
     alignSelf: 'center',
   },
-  emptyCard: {
-    marginHorizontal: 16,
-    elevation: 2,
-  },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: spacing.xl,
   },
   emptyTitle: {
-    marginTop: 16,
-    marginBottom: 8,
-    color: '#666',
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    color: colors.ink,
+    fontWeight: '800',
+    fontSize: 16,
     textAlign: 'center',
   },
   emptySubtitle: {
-    color: '#999',
+    color: colors.inkSoft,
     textAlign: 'center',
   },
-  buttonContainer: {
-    padding: 16,
-  },
   backButton: {
-    marginTop: 8,
-    marginBottom: 32,
-    borderColor: '#2196F3',
+    marginTop: spacing.sm,
+    borderColor: colors.riverMid,
   },
 });

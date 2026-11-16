@@ -13,51 +13,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { FirebaseService } from '../services/FirebaseService';
-
-// Shared River palette (matches HomeScreen)
-const colors = {
-  riverDeep: '#0E4D5C',
-  riverMid: '#1B7A8C',
-  gold: '#E8A33D',
-  sand: '#F2EDE4',
-  surface: '#FBF9F5',
-  clay: '#C65A3A',
-  ink: '#123038',
-  inkSoft: '#5A6B70',
-  hairline: '#E3DCCF',
-  tealWash: '#E2EEF0',
-};
-
-// Section wrapper: a quiet hairline panel with a title and optional required dot
-function Section({ title, required, children, action }) {
-  return (
-    <View style={styles.panel}>
-      <View style={styles.panelHead}>
-        <View style={styles.panelTitleWrap}>
-          <Text style={styles.panelTitle}>{title}</Text>
-          {required && <View style={styles.reqDot} />}
-        </View>
-        {action}
-      </View>
-      {children}
-    </View>
-  );
-}
-
-// Selectable pill (replaces Paper Chip) — teal wash when active, readable in sun
-function Pill({ label, selected, onPress, style }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.pill, selected && styles.pillSelected, style]}
-      android_ripple={{ color: 'rgba(27,122,140,0.12)' }}
-    >
-      <Text style={[styles.pillText, selected && styles.pillTextSelected]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+import { colors, spacing } from '../theme';
+import ScreenContainer from '../components/ScreenContainer';
+import CurvedHeader from '../components/CurvedHeader';
+import Section from '../components/Panel';
+import Pill from '../components/Pill';
+import PrimaryButton from '../components/PrimaryButton';
 
 const WATER_SOURCES = [
   'คก',
@@ -104,6 +65,7 @@ const TIME_PERIODS = [
 
 export default function DataEntryScreen({ navigation }) {
   const { currentEntry, updateCurrentEntry } = useFishingData();
+  // insets ใช้กับ map modal (full-screen Modal อยู่นอก tree ของ ScreenContainer)
   const insets = useSafeAreaInsets();
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -438,18 +400,16 @@ export default function DataEntryScreen({ navigation }) {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
+    <ScreenContainer
+      header={
+        <CurvedHeader
+          showBack={false}
+          eyebrow="ขั้นที่ 1 จาก 3"
+          title="บันทึกการจับปลา"
+          subtitle="กรอกข้อมูลการออกจับของวันนี้"
+        />
+      }
     >
-      {/* ── Header band: step 1 of the recording flow ── */}
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.stepLabel}>ขั้นที่ 1 จาก 3</Text>
-        <Text style={styles.headerTitle}>บันทึกการจับปลา</Text>
-        <Text style={styles.headerSub}>กรอกข้อมูลการออกจับของวันนี้</Text>
-      </View>
-
       <View style={styles.content}>
         {/* Date Selection */}
         <Section title="วันที่บันทึก">
@@ -588,14 +548,13 @@ export default function DataEntryScreen({ navigation }) {
         </Section>
 
         {/* Continue Button */}
-        <Pressable
+        <PrimaryButton
+          variant="simple"
+          title="เพิ่มรายการปลา"
+          icon="arrow-right"
           onPress={validateAndContinue}
-          style={({ pressed }) => [styles.continueButton, pressed && styles.continuePressed]}
-          android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
-        >
-          <Text style={styles.continueText}>เพิ่มรายการปลา</Text>
-          <Icon source="arrow-right" size={22} color={colors.surface} />
-        </Pressable>
+          style={styles.continueSpacing}
+        />
 
         {/* Date/Time Pickers */}
         {showDatePicker && (
@@ -786,7 +745,7 @@ export default function DataEntryScreen({ navigation }) {
             onRequestClose={handleCancelMap}
           >
             <View style={styles.mapContainer}>
-              <View style={styles.mapHeader}>
+              <View style={[styles.mapHeader, { paddingTop: insets.top + spacing.sm }]}>
                 <Text variant="titleLarge" style={styles.mapTitle}>
                   ปรับตำแหน่งการจับปลา
                 </Text>
@@ -805,7 +764,7 @@ export default function DataEntryScreen({ navigation }) {
                 markerTitle={selectedSpot?.spotName}
               />
               
-              <View style={styles.mapFooter}>
+              <View style={[styles.mapFooter, { paddingBottom: insets.bottom + spacing.lg }]}>
                 <View style={styles.coordinateDisplay}>
                   <Text variant="bodyMedium" style={styles.coordinateLabel}>
                     พิกัดปัจจุบัน:
@@ -840,7 +799,7 @@ export default function DataEntryScreen({ navigation }) {
           </Modal>
         )}
       </View>
-    </ScrollView>
+    </ScreenContainer>
   );
 }
 
@@ -882,36 +841,6 @@ const styles = StyleSheet.create({
   },
 
   // Section panel (quiet hairline, no shadow)
-  panel: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    padding: 16,
-    marginBottom: 16,
-  },
-  panelHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  panelTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  panelTitle: {
-    color: colors.ink,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  reqDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.gold,
-    marginLeft: 7,
-  },
   hint: {
     color: colors.inkSoft,
     fontSize: 13,
@@ -942,27 +871,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  pill: {
-    paddingVertical: 9,
-    paddingHorizontal: 15,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: '#fff',
-  },
-  pillSelected: {
-    backgroundColor: colors.tealWash,
-    borderColor: colors.riverMid,
-  },
-  pillText: {
-    color: colors.inkSoft,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  pillTextSelected: {
-    color: colors.riverDeep,
-    fontWeight: '800',
   },
   timeRow: {
     flexDirection: 'row',
@@ -1022,24 +930,9 @@ const styles = StyleSheet.create({
   },
 
   // Continue button
-  continueButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.riverDeep,
-    borderRadius: 16,
-    paddingVertical: 17,
+  continueSpacing: {
     marginTop: 8,
     marginBottom: 24,
-  },
-  continuePressed: {
-    backgroundColor: '#0A3B46',
-  },
-  continueText: {
-    color: colors.surface,
-    fontSize: 17,
-    fontWeight: '800',
   },
 
   // ── Modals (date/time, gear) ──
@@ -1102,7 +995,6 @@ const styles = StyleSheet.create({
   mapHeader: {
     padding: 16,
     backgroundColor: colors.riverDeep,
-    paddingTop: 50,
   },
   mapTitle: {
     color: colors.surface,

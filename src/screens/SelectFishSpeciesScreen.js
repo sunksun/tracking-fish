@@ -3,7 +3,6 @@ import { View, StyleSheet, FlatList, Alert, Modal, TouchableOpacity, Image, Dime
 import {
   Button,
   Text,
-  Card,
   Searchbar,
   ActivityIndicator,
   List,
@@ -12,11 +11,14 @@ import {
   IconButton
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FirebaseService } from '../services/FirebaseService';
 import { AIService } from '../services/AIService';
 import { isAIConfigured } from '../config/ai';
+import useBottomInset from '../components/useBottomInset';
+import CurvedHeader from '../components/CurvedHeader';
+import Panel from '../components/Panel';
+import { colors, spacing, radius } from '../theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -24,7 +26,7 @@ export default function SelectFishSpeciesScreen({ navigation, route }) {
   // โหมด 'picker' = ถูกเรียกจาก flow บันทึก (เลือกแล้วส่งชนิดกลับไป AddFish)
   // ไม่มี mode = แท็บจำแนกปลา standalone (แตะเพื่อดูรายละเอียด/รูป ไม่ navigate)
   const isPicker = route?.params?.mode === 'picker';
-  const tabBarHeight = useBottomTabBarHeight();
+  const bottomInset = useBottomInset(0);
   const [allFishSpecies, setAllFishSpecies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -287,18 +289,16 @@ export default function SelectFishSpeciesScreen({ navigation, route }) {
 
 
   const ListEmptyComponent = useMemo(() => (
-    <Card style={styles.emptyCard}>
-      <Card.Content>
-        <View style={styles.emptyState}>
-          <Text variant="titleMedium" style={styles.emptyTitle}>
-            ไม่พบชนิดปลาที่ค้นหา
-          </Text>
-          <Text variant="bodyMedium" style={styles.emptySubtitle}>
-            ลองค้นหาด้วยคำอื่น
-          </Text>
-        </View>
-      </Card.Content>
-    </Card>
+    <Panel style={styles.emptyCard}>
+      <View style={styles.emptyState}>
+        <Text variant="titleMedium" style={styles.emptyTitle}>
+          ไม่พบชนิดปลาที่ค้นหา
+        </Text>
+        <Text variant="bodyMedium" style={styles.emptySubtitle}>
+          ลองค้นหาด้วยคำอื่น
+        </Text>
+      </View>
+    </Panel>
   ), []);
 
   const ListFooterComponent = useMemo(() => (
@@ -316,64 +316,70 @@ export default function SelectFishSpeciesScreen({ navigation, route }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>กำลังโหลดข้อมูลชนิดปลา...</Text>
+      <View style={styles.container}>
+        <CurvedHeader title={isPicker ? 'เลือกชนิดปลา' : 'จำแนกชนิดปลา'} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.riverMid} />
+          <Text style={styles.loadingText}>กำลังโหลดข้อมูลชนิดปลา...</Text>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <CurvedHeader
+        title={isPicker ? 'เลือกชนิดปลา' : 'จำแนกชนิดปลา'}
+        subtitle="ค้นหาและเลือกชนิดปลาที่ต้องการบันทึก"
+      />
       <FlatList
         data={filteredFishSpecies}
         keyExtractor={keyExtractor}
         renderItem={renderFishItem}
-        contentContainerStyle={{ paddingBottom: tabBarHeight }}
+        contentContainerStyle={{ paddingBottom: bottomInset }}
         ListHeaderComponent={
           <View>
-            {/* Header Card */}
-            <Card style={styles.headerCard}>
-              <Card.Content>
-                <View style={styles.headerTitleRow}>
-                  <Text variant="titleMedium" style={styles.headerTitle}>
-                    เลือกชนิดปลา
-                  </Text>
-                  <Button
-                    mode="text"
-                    compact
-                    onPress={async () => {
-                      try {
-                        console.log('🗑️ Clearing fish species cache...');
-                        await AsyncStorage.removeItem('fish_species_cache');
-                        await AsyncStorage.removeItem('fish_species_cache_time');
-                        console.log('✅ Cache cleared, loading fresh data...');
-                        loadFishSpecies();
-                        Alert.alert('สำเร็จ', 'กำลังโหลดข้อมูลใหม่จาก Firebase...');
-                      } catch (error) {
-                        console.error('❌ Error clearing cache:', error);
-                        Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
-                      }
-                    }}
-                    style={styles.refreshButton}
-                  >
-                    รีเฟรช
-                  </Button>
-                </View>
+            {/* Header actions */}
+            <Panel style={styles.headerCard}>
+              <View style={styles.headerTitleRow}>
                 <Text variant="bodyMedium" style={styles.headerSubtitle}>
-                  ค้นหาและเลือกชนิดปลาที่ต้องการบันทึก
+                  {filteredFishSpecies.length > 0
+                    ? (searchQuery ? `พบ ${filteredFishSpecies.length} รายการ` : `ทั้งหมด ${filteredFishSpecies.length} ชนิด`)
+                    : 'เลือกชนิดปลา'}
                 </Text>
                 <Button
-                  mode="contained"
-                  icon="camera"
-                  onPress={startAIFlow}
-                  style={styles.aiButton}
-                  contentStyle={styles.aiButtonContent}
+                  mode="text"
+                  compact
+                  textColor={colors.riverMid}
+                  onPress={async () => {
+                    try {
+                      console.log('🗑️ Clearing fish species cache...');
+                      await AsyncStorage.removeItem('fish_species_cache');
+                      await AsyncStorage.removeItem('fish_species_cache_time');
+                      console.log('✅ Cache cleared, loading fresh data...');
+                      loadFishSpecies();
+                      Alert.alert('สำเร็จ', 'กำลังโหลดข้อมูลใหม่จาก Firebase...');
+                    } catch (error) {
+                      console.error('❌ Error clearing cache:', error);
+                      Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
+                    }
+                  }}
+                  style={styles.refreshButton}
                 >
-                  ถ่ายรูปให้ AI ช่วยแนะนำ
+                  รีเฟรช
                 </Button>
-              </Card.Content>
-            </Card>
+              </View>
+              <Button
+                mode="contained"
+                icon="camera"
+                onPress={startAIFlow}
+                buttonColor={colors.riverDeep}
+                style={styles.aiButton}
+                contentStyle={styles.aiButtonContent}
+              >
+                ถ่ายรูปให้ AI ช่วยแนะนำ
+              </Button>
+            </Panel>
 
             {/* Search Bar */}
             <Searchbar
@@ -381,14 +387,9 @@ export default function SelectFishSpeciesScreen({ navigation, route }) {
               onChangeText={setSearchQuery}
               value={searchQuery}
               style={styles.searchBar}
+              inputStyle={styles.searchInput}
+              iconColor={colors.inkSoft}
             />
-
-            {/* Result count */}
-            {filteredFishSpecies.length > 0 && (
-              <Text variant="bodySmall" style={styles.resultCount}>
-                {searchQuery ? `พบ ${filteredFishSpecies.length} รายการ` : `ทั้งหมด ${filteredFishSpecies.length} ชนิด`}
-              </Text>
-            )}
           </View>
         }
         ListEmptyComponent={ListEmptyComponent}
@@ -476,7 +477,7 @@ export default function SelectFishSpeciesScreen({ navigation, route }) {
 
             {aiLoading && (
               <View style={styles.aiCenter}>
-                <ActivityIndicator size="large" color="#2196F3" />
+                <ActivityIndicator size="large" color={colors.riverMid} />
                 <Text style={styles.aiLoadingText}>กำลังวิเคราะห์รูปปลา...</Text>
               </View>
             )}
@@ -510,7 +511,7 @@ export default function SelectFishSpeciesScreen({ navigation, route }) {
                     const isTop = index === 0;
                     const strong = p.confidence >= aiResult.threshold;
                     // top-1 ที่ผ่านเกณฑ์ = พระเอก; ตัวอื่นเป็นทางเลือก
-                    const barColor = strong ? '#2e7d32' : '#ef6c00';
+                    const barColor = strong ? colors.riverMid : colors.gold;
                     return (
                       <View style={[styles.aiRow, isTop && strong && styles.aiRowTop]}>
                         <View style={styles.aiRowText}>
@@ -555,106 +556,99 @@ export default function SelectFishSpeciesScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.sand,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
-    marginTop: 16,
-    color: '#666',
+    marginTop: spacing.lg,
+    color: colors.inkSoft,
   },
   headerCard: {
-    margin: 16,
-    marginBottom: 8,
-    elevation: 4,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   headerTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  headerTitle: {
-    fontWeight: 'bold',
-    color: '#2196F3',
-    flex: 1,
+    marginBottom: spacing.sm,
   },
   refreshButton: {
-    marginRight: -8,
+    marginRight: -spacing.sm,
   },
   headerSubtitle: {
-    color: '#666',
-  },
-  searchBar: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    elevation: 2,
-  },
-  listContainer: {
+    color: colors.inkSoft,
     flex: 1,
   },
-  resultCount: {
-    color: '#666',
-    marginHorizontal: 16,
-    marginBottom: 8,
-    fontStyle: 'italic',
+  searchBar: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    elevation: 0,
+  },
+  searchInput: {
+    color: colors.ink,
   },
   listItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
   },
   selectedListItem: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: colors.tealWash,
   },
   listItemTitle: {
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 16,
+    color: colors.ink,
   },
   listItemDescription: {
     fontSize: 13,
     marginTop: 4,
+    color: colors.inkSoft,
   },
   emptyCard: {
-    marginHorizontal: 16,
-    elevation: 2,
+    marginHorizontal: spacing.lg,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: spacing.xl,
   },
   emptyTitle: {
-    marginTop: 16,
-    marginBottom: 8,
-    color: '#666',
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    color: colors.ink,
+    fontWeight: '800',
     textAlign: 'center',
   },
   emptySubtitle: {
-    color: '#999',
+    color: colors.inkSoft,
     textAlign: 'center',
   },
   buttonContainer: {
-    padding: 16,
+    padding: spacing.lg,
   },
   backButton: {
-    marginTop: 8,
-    marginBottom: 32,
-    borderColor: '#2196F3',
+    marginTop: spacing.sm,
+    borderColor: colors.riverMid,
   },
   avatarContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   fishAvatar: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   fishAvatarIcon: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: colors.tealWash,
   },
   modalContainer: {
     flex: 1,
@@ -668,9 +662,9 @@ const styles = StyleSheet.create({
   modalContent: {
     width: SCREEN_WIDTH * 0.95,
     maxHeight: SCREEN_HEIGHT * 0.85,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   modalHeader: {
@@ -678,12 +672,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   modalTitle: {
     flex: 1,
-    fontWeight: 'bold',
-    color: '#2196F3',
+    fontWeight: '800',
+    color: colors.riverDeep,
   },
   closeButton: {
     margin: 0,
@@ -691,16 +685,15 @@ const styles = StyleSheet.create({
   fullImage: {
     width: SCREEN_WIDTH * 0.85,
     height: SCREEN_HEIGHT * 0.6,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   closeModalButton: {
-    marginTop: 16,
+    marginTop: spacing.lg,
     width: '100%',
   },
   // ปุ่มเรียก AI ใน header
   aiButton: {
-    marginTop: 12,
-    backgroundColor: '#2196F3',
+    marginTop: spacing.md,
   },
   aiButtonContent: {
     paddingVertical: 6,
@@ -712,12 +705,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   aiModalCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    paddingTop: 8,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxl,
+    paddingTop: spacing.sm,
     maxHeight: SCREEN_HEIGHT * 0.85,
   },
   aiModalHeader: {
@@ -726,96 +719,96 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   aiModalTitle: {
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+    fontWeight: '800',
+    color: colors.ink,
   },
   aiPhoto: {
     width: '100%',
     height: 160,
-    borderRadius: 12,
-    marginBottom: 12,
-    backgroundColor: '#eee',
+    borderRadius: radius.card,
+    marginBottom: spacing.md,
+    backgroundColor: colors.sand,
   },
   aiCenter: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: spacing.xxl,
   },
   aiLoadingText: {
-    marginTop: 12,
-    color: '#666',
+    marginTop: spacing.md,
+    color: colors.inkSoft,
   },
   aiErrorTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#c62828',
-    marginBottom: 4,
+    fontWeight: '800',
+    color: colors.clay,
+    marginBottom: spacing.xs,
   },
   aiErrorText: {
-    color: '#666',
+    color: colors.inkSoft,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   aiRetry: {
-    borderColor: '#2196F3',
+    borderColor: colors.riverMid,
   },
   aiWarnBanner: {
-    backgroundColor: '#fff3e0',
-    borderRadius: 8,
+    backgroundColor: 'rgba(232,163,61,0.14)',
+    borderRadius: radius.sm,
     paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
   },
   aiWarnText: {
-    color: '#e65100',
+    color: colors.ink,
     fontWeight: '600',
     textAlign: 'center',
   },
   aiList: {
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   aiRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.hairline,
   },
   aiRowTop: {
-    backgroundColor: '#e8f5e9',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    backgroundColor: colors.tealWash,
+    borderRadius: radius.card,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 0,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   aiRowText: {
     flex: 1,
-    paddingRight: 12,
+    paddingRight: spacing.md,
   },
   aiName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: colors.ink,
   },
   aiNameTop: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   aiLocal: {
     fontSize: 13,
-    color: '#666',
+    color: colors.inkSoft,
     marginTop: 2,
   },
   aiSci: {
     fontSize: 12,
-    color: '#999',
+    color: colors.inkSoft,
     fontStyle: 'italic',
     marginTop: 1,
   },
   aiBarTrack: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#eceff1',
-    marginTop: 8,
+    backgroundColor: colors.hairline,
+    marginTop: spacing.sm,
     overflow: 'hidden',
   },
   aiBarFill: {
@@ -825,19 +818,19 @@ const styles = StyleSheet.create({
   aiPct: {
     fontSize: 13,
     fontWeight: '700',
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   aiPick: {
     alignSelf: 'center',
   },
   aiNoMatch: {
     fontSize: 12,
-    color: '#999',
+    color: colors.inkSoft,
     alignSelf: 'center',
     maxWidth: 80,
     textAlign: 'center',
   },
   aiManual: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
 });

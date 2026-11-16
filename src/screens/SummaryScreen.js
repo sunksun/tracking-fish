@@ -1,7 +1,6 @@
-import { View, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { View, StyleSheet, Image, Alert } from 'react-native';
 import {
   Button,
-  Card,
   Text,
   List,
   Divider,
@@ -9,6 +8,10 @@ import {
 } from 'react-native-paper';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { useAuth } from '../contexts/AuthContext';
+import ScreenContainer from '../components/ScreenContainer';
+import CurvedHeader from '../components/CurvedHeader';
+import Panel from '../components/Panel';
+import { colors, spacing, radius } from '../theme';
 
 
 export default function SummaryScreen({ navigation }) {
@@ -108,7 +111,7 @@ export default function SummaryScreen({ navigation }) {
             Alert.alert(
               'สำเร็จ',
               'บันทึกข้อมูลเรียบร้อยแล้ว',
-              [{ text: 'ตกลง', onPress: () => navigation.navigate('HistoryTab', { screen: 'History' }) }]
+              [{ text: 'ตกลง', onPress: () => navigation.navigate('HomeTab', { screen: 'Home' }) }]
             );
           }
         }
@@ -117,298 +120,266 @@ export default function SummaryScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {/* Fish Photos */}
-        {!currentEntry.noFishing && currentEntry.fishList.length > 0 && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                รูปภาพปลาที่บันทึก
-              </Text>
-              {currentEntry.fishList.some(fish => fish.photo) ? (
-                <View style={styles.photosContainer}>
-                  {currentEntry.fishList.map((fish) => 
-                    fish.photo ? (
-                      <View key={fish.id} style={styles.photoItem}>
-                        <Image source={{ uri: fish.photo }} style={styles.fishPhoto} />
-                        <Text variant="bodySmall" style={styles.photoCaption}>
-                          {fish.name}
-                        </Text>
-                      </View>
-                    ) : null
-                  )}
-                </View>
-              ) : (
-                <View style={styles.noPhotosContainer}>
-                  <Text variant="bodyMedium" style={styles.noPhotosText}>
-                    ไม่มีรูปภาพปลาที่บันทึก
-                  </Text>
-                </View>
-              )}
-            </Card.Content>
-          </Card>
-        )}
-
-        {/* Fisher Information */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              ข้อมูลชาวประมง
-            </Text>
-            <View style={styles.infoRow}>
-              <Text variant="bodyMedium" style={styles.label}>ชื่อชาวประมง:</Text>
-              <Text variant="bodyMedium" style={styles.fisherName}>
-                {isResearcher && selectedFisher ? selectedFisher.name : user?.name || '-'}
-              </Text>
-            </View>
-            {isResearcher && selectedFisher && (
-              <>
-                <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>หมู่บ้าน:</Text>
-                  <Text variant="bodyMedium">{selectedFisher.village || '-'}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>ผู้บันทึกข้อมูล:</Text>
-                  <Text variant="bodyMedium" style={styles.researcherName}>
-                    (นักวิจัย)
-                  </Text>
-                </View>
-              </>
-            )}
-          </Card.Content>
-        </Card>
-
-        {/* General Information */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              ข้อมูลทั่วไป
-            </Text>
-            <View style={styles.infoRow}>
-              <Text variant="bodyMedium" style={styles.label}>วันที่:</Text>
-              <Text variant="bodyMedium">{formatDate(currentEntry.date)}</Text>
-            </View>
-
-            {currentEntry.noFishing ? (
-              <View style={styles.noFishingContainer}>
-                <Chip icon="information" mode="outlined" style={styles.noFishingChip}>
-                  ไม่ได้จับปลาในวันนี้
-                </Chip>
-              </View>
-            ) : (
-              <>
-                <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>แหล่งน้ำ:</Text>
-                  <Text variant="bodyMedium">
-                    {currentEntry.waterSource || '-'}
-                  </Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>สภาพอากาศ:</Text>
-                  <Text variant="bodyMedium">{currentEntry.weather || '-'}</Text>
-                </View>
-                
-                {currentEntry.fishingGear && (
-                  <View style={styles.infoRow}>
-                    <Text variant="bodyMedium" style={styles.label}>เครื่องมือจับปลา:</Text>
-                    <Text variant="bodyMedium" style={styles.gearInlineItem}>
-                      {getGearDisplayText(currentEntry.fishingGear)}
+    <ScreenContainer
+      header={<CurvedHeader eyebrow="ขั้นที่ 3 จาก 3" title="สรุปและยืนยันข้อมูล" />}
+      contentContainerStyle={styles.content}
+    >
+      {/* Fish Photos */}
+      {!currentEntry.noFishing && currentEntry.fishList.length > 0 && (
+        <Panel title="รูปภาพปลาที่บันทึก">
+          {currentEntry.fishList.some(fish => fish.photo) ? (
+            <View style={styles.photosContainer}>
+              {currentEntry.fishList.map((fish) =>
+                fish.photo ? (
+                  <View key={fish.id} style={styles.photoItem}>
+                    <Image source={{ uri: fish.photo }} style={styles.fishPhoto} />
+                    <Text variant="bodySmall" style={styles.photoCaption}>
+                      {fish.name}
                     </Text>
                   </View>
-                )}
-                
-                <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>ช่วงเวลาที่ออกจับ:</Text>
-                  <Text variant="bodyMedium">{formatTime(currentEntry.startTime)}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>น้ำหนักปลาทั้งหมด:</Text>
-                  <Text variant="bodyMedium">{currentEntry.totalWeight || '-'} กก.</Text>
-                </View>
-              </>
-            )}
-          </Card.Content>
-        </Card>
-
-
-        {/* Fish List */}
-        {!currentEntry.noFishing && currentEntry.fishList.length > 0 && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                รายการปลา ({currentEntry.fishList.length} ชนิด)
+                ) : null
+              )}
+            </View>
+          ) : (
+            <View style={styles.noPhotosContainer}>
+              <Text variant="bodyMedium" style={styles.noPhotosText}>
+                ไม่มีรูปภาพปลาที่บันทึก
               </Text>
-              
-              {/* Summary */}
-              <View style={styles.summaryContainer}>
-                <Text variant="bodyMedium" style={styles.summaryText}>
-                  จำนวนรวม: {getTotalCount()} ตัว
-                </Text>
-                <Text variant="bodyMedium" style={styles.summaryText}>
-                  น้ำหนักรวม: {getTotalWeight()} กก.
-                </Text>
-                <Text variant="bodyMedium" style={styles.summaryText}>
-                  มูลค่ารวม: {getTotalValue()} บาท
+            </View>
+          )}
+        </Panel>
+      )}
+
+      {/* Fisher Information */}
+      <Panel title="ข้อมูลชาวประมง">
+        <View style={styles.infoRow}>
+          <Text variant="bodyMedium" style={styles.label}>ชื่อชาวประมง:</Text>
+          <Text variant="bodyMedium" style={styles.fisherName}>
+            {isResearcher && selectedFisher ? selectedFisher.name : user?.name || '-'}
+          </Text>
+        </View>
+        {isResearcher && selectedFisher && (
+          <>
+            <View style={styles.infoRow}>
+              <Text variant="bodyMedium" style={styles.label}>หมู่บ้าน:</Text>
+              <Text variant="bodyMedium" style={styles.value}>{selectedFisher.village || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text variant="bodyMedium" style={styles.label}>ผู้บันทึกข้อมูล:</Text>
+              <Text variant="bodyMedium" style={styles.researcherName}>
+                (นักวิจัย)
+              </Text>
+            </View>
+          </>
+        )}
+      </Panel>
+
+      {/* General Information */}
+      <Panel title="ข้อมูลทั่วไป">
+        <View style={styles.infoRow}>
+          <Text variant="bodyMedium" style={styles.label}>วันที่:</Text>
+          <Text variant="bodyMedium" style={styles.value}>{formatDate(currentEntry.date)}</Text>
+        </View>
+
+        {currentEntry.noFishing ? (
+          <View style={styles.noFishingContainer}>
+            <Chip icon="information" mode="flat" style={styles.noFishingChip} textStyle={styles.noFishingText}>
+              ไม่ได้จับปลาในวันนี้
+            </Chip>
+          </View>
+        ) : (
+          <>
+            <View style={styles.infoRow}>
+              <Text variant="bodyMedium" style={styles.label}>แหล่งน้ำ:</Text>
+              <Text variant="bodyMedium" style={styles.value}>
+                {currentEntry.waterSource || '-'}
+              </Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text variant="bodyMedium" style={styles.label}>สภาพอากาศ:</Text>
+              <Text variant="bodyMedium" style={styles.value}>{currentEntry.weather || '-'}</Text>
+            </View>
+
+            {currentEntry.fishingGear && (
+              <View style={styles.infoRow}>
+                <Text variant="bodyMedium" style={styles.label}>เครื่องมือจับปลา:</Text>
+                <Text variant="bodyMedium" style={styles.gearInlineItem}>
+                  {getGearDisplayText(currentEntry.fishingGear)}
                 </Text>
               </View>
+            )}
 
-              <Divider style={styles.divider} />
+            <View style={styles.infoRow}>
+              <Text variant="bodyMedium" style={styles.label}>ช่วงเวลาที่ออกจับ:</Text>
+              <Text variant="bodyMedium" style={styles.value}>{formatTime(currentEntry.startTime)}</Text>
+            </View>
 
-              {currentEntry.fishList.map((fish, index) => (
-                <View key={fish.id} style={styles.fishItem}>
-                  <List.Item
-                    title={fish.name}
-                    description={`${fish.count} ตัว | ${fish.weight} กก. | ${fish.price} บาท`}
-                    left={() => <List.Icon icon="fish" />}
-                    style={styles.listItem}
-                  />
-                  
-                  {(fish.minLength !== '0' || fish.maxLength !== '0') && (
-                    <Text variant="bodySmall" style={styles.lengthInfo}>
-                      ความยาว: {fish.minLength} - {fish.maxLength} ซม.
-                    </Text>
-                  )}
-                  
-                  {index < currentEntry.fishList.length - 1 && (
-                    <Divider style={styles.itemDivider} />
-                  )}
-                </View>
-              ))}
-            </Card.Content>
-          </Card>
+            <View style={styles.infoRow}>
+              <Text variant="bodyMedium" style={styles.label}>น้ำหนักปลาทั้งหมด:</Text>
+              <Text variant="bodyMedium" style={styles.value}>{currentEntry.totalWeight || '-'} กก.</Text>
+            </View>
+          </>
         )}
+      </Panel>
 
+      {/* Fish List */}
+      {!currentEntry.noFishing && currentEntry.fishList.length > 0 && (
+        <Panel title={`รายการปลา (${currentEntry.fishList.length} ชนิด)`}>
+          {/* Summary */}
+          <View style={styles.summaryContainer}>
+            <Text variant="bodyMedium" style={styles.summaryText}>
+              จำนวนรวม: {getTotalCount()} ตัว
+            </Text>
+            <Text variant="bodyMedium" style={styles.summaryText}>
+              น้ำหนักรวม: {getTotalWeight()} กก.
+            </Text>
+            <Text variant="bodyMedium" style={styles.summaryText}>
+              มูลค่ารวม: {getTotalValue()} บาท
+            </Text>
+          </View>
 
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="outlined"
-            onPress={() => navigation.goBack()}
-            style={styles.backButtonSeparate}
-            icon="arrow-left"
-          >
-            ย้อนกลับ
-          </Button>
-          
-          <Button
-            mode="contained"
-            onPress={handleSave}
-            style={styles.saveButtonSeparate}
-            icon="content-save"
-          >
-            ยืนยันการบันทึก
-          </Button>
-        </View>
+          <Divider style={styles.divider} />
+
+          {currentEntry.fishList.map((fish, index) => (
+            <View key={fish.id} style={styles.fishItem}>
+              <List.Item
+                title={fish.name}
+                description={`${fish.count} ตัว | ${fish.weight} กก. | ${fish.price} บาท`}
+                left={() => <List.Icon icon="fish" color={colors.riverMid} />}
+                titleStyle={styles.listItemTitle}
+                descriptionStyle={styles.listItemDescription}
+                style={styles.listItem}
+              />
+
+              {(fish.minLength !== '0' || fish.maxLength !== '0') && (
+                <Text variant="bodySmall" style={styles.lengthInfo}>
+                  ความยาว: {fish.minLength} - {fish.maxLength} ซม.
+                </Text>
+              )}
+
+              {index < currentEntry.fishList.length - 1 && (
+                <Divider style={styles.itemDivider} />
+              )}
+            </View>
+          ))}
+        </Panel>
+      )}
+
+      {/* Action Buttons */}
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="outlined"
+          onPress={() => navigation.goBack()}
+          style={styles.backButtonSeparate}
+          textColor={colors.riverMid}
+          icon="arrow-left"
+        >
+          ย้อนกลับ
+        </Button>
+
+        <Button
+          mode="contained"
+          onPress={handleSave}
+          style={styles.saveButtonSeparate}
+          buttonColor={colors.riverDeep}
+          icon="content-save"
+        >
+          ยืนยันการบันทึก
+        </Button>
       </View>
-    </ScrollView>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
   content: {
-    padding: 16,
-  },
-  card: {
-    marginBottom: 16,
-    elevation: 2,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    fontWeight: 'bold',
-    color: '#2196F3',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     alignItems: 'center',
   },
   label: {
-    fontWeight: '500',
+    fontWeight: '600',
+    color: colors.inkSoft,
     flex: 1,
   },
+  value: {
+    color: colors.ink,
+  },
   gearInlineItem: {
-    color: '#333',
+    color: colors.ink,
     flex: 2,
+    textAlign: 'right',
   },
   noFishingContainer: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   noFishingChip: {
-    backgroundColor: '#ffeb3b',
+    backgroundColor: 'rgba(232,163,61,0.18)',
   },
-  gearItem: {
-    paddingVertical: 8,
-    marginBottom: 8,
-  },
-  gearName: {
-    fontWeight: '500',
-    marginBottom: 4,
-    color: '#333',
-  },
-  gearDetails: {
-    paddingLeft: 12,
-  },
-  gearDetailText: {
-    color: '#666',
-    marginBottom: 2,
-  },
-  gearDivider: {
-    marginTop: 8,
-    marginBottom: 4,
+  noFishingText: {
+    color: colors.riverDeep,
   },
   summaryContainer: {
-    backgroundColor: '#e3f2fd',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: colors.tealWash,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
   },
   summaryText: {
     marginBottom: 4,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: colors.riverDeep,
   },
   divider: {
-    marginVertical: 8,
+    marginVertical: spacing.sm,
+    backgroundColor: colors.hairline,
   },
   fishItem: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   listItem: {
     paddingHorizontal: 0,
   },
+  listItemTitle: {
+    fontWeight: '800',
+    color: colors.ink,
+  },
+  listItemDescription: {
+    color: colors.inkSoft,
+  },
   lengthInfo: {
     marginLeft: 56,
-    color: '#666',
+    color: colors.inkSoft,
     marginTop: -8,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   itemDivider: {
-    marginTop: 8,
+    marginTop: spacing.sm,
+    backgroundColor: colors.hairline,
   },
   fisherName: {
-    fontWeight: 'bold',
-    color: '#2196F3',
+    fontWeight: '800',
+    color: colors.riverDeep,
   },
   researcherName: {
-    fontWeight: '500',
-    color: '#4caf50',
+    fontWeight: '600',
+    color: colors.riverMid,
   },
   buttonContainer: {
     flexDirection: 'column',
-    marginTop: 16,
-    marginBottom: 32,
+    marginTop: spacing.lg,
   },
   backButtonSeparate: {
     width: '100%',
-    marginBottom: 12,
+    marginBottom: spacing.md,
+    borderColor: colors.riverMid,
   },
   saveButtonSeparate: {
     width: '100%',
@@ -420,26 +391,26 @@ const styles = StyleSheet.create({
   },
   photoItem: {
     width: '48%',
-    marginBottom: 12,
+    marginBottom: spacing.md,
     alignItems: 'center',
   },
   fishPhoto: {
     width: '100%',
     height: 120,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     marginBottom: 4,
   },
   photoCaption: {
     textAlign: 'center',
-    color: '#666',
-    fontWeight: '500',
+    color: colors.inkSoft,
+    fontWeight: '600',
   },
   noPhotosContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: spacing.lg,
   },
   noPhotosText: {
-    color: '#666',
+    color: colors.inkSoft,
     fontStyle: 'italic',
   },
 });

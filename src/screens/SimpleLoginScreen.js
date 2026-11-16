@@ -8,17 +8,18 @@ import {
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
+import { colors } from '../theme';
 
-// สายน้ำโขงยามเช้า — น้ำลึก → ผิวน้ำ, แดดเช้าเป็นสีเน้นเดียว
+// สายน้ำโขงยามเช้า — ใช้ token กลางจาก src/theme (sunrise = gold)
 const COLORS = {
-  riverDeep: '#0B4F6C',
-  riverMid: '#1B7A94',
-  riverLight: '#3D9BB5',
-  sunrise: '#E8A33D',
-  sunriseDark: '#D1902F',
-  sand: '#F2EFE6',
-  ink: '#0A2E3D',
-  inkSoft: '#4A6B78',
+  riverDeep: colors.riverDeep,
+  riverMid: colors.riverMid,
+  riverLight: colors.riverLight,
+  sunrise: colors.gold,
+  sunriseDark: colors.gold,
+  sand: colors.sand,
+  ink: colors.ink,
+  inkSoft: colors.inkSoft,
 };
 
 export default function SimpleLoginScreen() {
