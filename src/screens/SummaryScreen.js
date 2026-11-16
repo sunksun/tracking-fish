@@ -94,42 +94,6 @@ export default function SummaryScreen({ navigation }) {
     }
   };
 
-  const calculateTotalHours = () => {
-    if (!currentEntry.startTime || !currentEntry.endTime) return '-';
-    
-    // ถ้าเป็น string-based time periods
-    if (typeof currentEntry.startTime === 'string' && typeof currentEntry.endTime === 'string') {
-      const timeMap = {
-        'เช้า': 8,      // 6-10 โมง (กลางคือ 8 โมง)
-        'กลางวัน': 14,  // 10-18 โมง (กลางคือ 14 โมง) 
-        'เย็น': 20      // 18-22 โมง (กลางคือ 20 โมง)
-      };
-      
-      const startHour = timeMap[currentEntry.startTime];
-      const endHour = timeMap[currentEntry.endTime];
-      
-      if (startHour === undefined || endHour === undefined) return '-';
-      
-      // คำนวณจำนวนชั่วโมง
-      let hours = endHour - startHour;
-      
-      // ถ้าเวลาสิ้นสุดน้อยกว่าเวลาเริ่ม แสดงว่าข้ามวัน
-      if (hours <= 0) {
-        hours = (24 - startHour) + endHour;
-      }
-      
-      return hours.toString();
-    }
-    
-    // ถ้าเป็น Date objects
-    const startTime = new Date(currentEntry.startTime);
-    const endTime = new Date(currentEntry.endTime);
-    const diffInMs = endTime - startTime;
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-    
-    return diffInHours.toFixed(1);
-  };
-
   const handleSave = () => {
 
     Alert.alert(
@@ -256,22 +220,10 @@ export default function SummaryScreen({ navigation }) {
                 )}
                 
                 <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>เวลาลงเครื่องมือ:</Text>
+                  <Text variant="bodyMedium" style={styles.label}>ช่วงเวลาที่ออกจับ:</Text>
                   <Text variant="bodyMedium">{formatTime(currentEntry.startTime)}</Text>
                 </View>
-                
-                <View style={styles.infoRow}>
-                  <Text variant="bodyMedium" style={styles.label}>เวลากู้เครื่องมือ:</Text>
-                  <Text variant="bodyMedium">{formatTime(currentEntry.endTime)}</Text>
-                </View>
-                
-                {currentEntry.startTime && currentEntry.endTime && (
-                  <View style={styles.infoRow}>
-                    <Text variant="bodyMedium" style={styles.label}>ระยะเวลาทั้งหมด:</Text>
-                    <Text variant="bodyMedium">{calculateTotalHours()} ชั่วโมง</Text>
-                  </View>
-                )}
-                
+
                 <View style={styles.infoRow}>
                   <Text variant="bodyMedium" style={styles.label}>น้ำหนักปลาทั้งหมด:</Text>
                   <Text variant="bodyMedium">{currentEntry.totalWeight || '-'} กก.</Text>

@@ -46,6 +46,13 @@ const actionTypes = {
   SET_LOADING: 'SET_LOADING'
 };
 
+// น้ำหนักรวมคำนวณจากน้ำหนักปลาแต่ละรายการในรายการปลา (single source of truth)
+function sumFishWeight(fishList) {
+  if (!Array.isArray(fishList)) return '';
+  const total = fishList.reduce((sum, fish) => sum + (parseFloat(fish.weight) || 0), 0);
+  return total.toFixed(2);
+}
+
 function fishingDataReducer(state, action) {
   switch (action.type) {
     case actionTypes.UPDATE_CURRENT_ENTRY:
@@ -57,23 +64,29 @@ function fishingDataReducer(state, action) {
         }
       };
 
-    case actionTypes.ADD_FISH:
+    case actionTypes.ADD_FISH: {
+      const fishList = [...state.currentEntry.fishList, action.payload];
       return {
         ...state,
         currentEntry: {
           ...state.currentEntry,
-          fishList: [...state.currentEntry.fishList, action.payload]
+          fishList,
+          totalWeight: sumFishWeight(fishList)
         }
       };
+    }
 
-    case actionTypes.REMOVE_FISH:
+    case actionTypes.REMOVE_FISH: {
+      const fishList = state.currentEntry.fishList.filter((_, index) => index !== action.payload);
       return {
         ...state,
         currentEntry: {
           ...state.currentEntry,
-          fishList: state.currentEntry.fishList.filter((_, index) => index !== action.payload)
+          fishList,
+          totalWeight: sumFishWeight(fishList)
         }
       };
+    }
 
     case actionTypes.SAVE_ENTRY:
       const newEntry = {
