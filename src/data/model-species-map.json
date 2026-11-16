@@ -1,7 +1,7 @@
 {
   "_comment": "Source of truth ฝั่ง ML: แมป model_index/training_label → ข้อมูลชนิดปลา สร้างอัตโนมัติด้วย gen_species_catalog.py (label_map.json + คู่มือปลาน้ำโขง) ห้ามแก้มือ — รันสคริปต์ใหม่ทุกครั้งที่เทรนโมเดลใหม่",
   "model_file": "fish_model.keras",
-  "num_classes": 11,
+  "num_classes": 24,
   "preprocessing": {
     "input_size": [
       224,
@@ -34,6 +34,16 @@
     },
     {
       "model_index": 2,
+      "training_label": "072_หางแดง, อีแจะ_ตะเพียนทอง",
+      "catalog_number": 72,
+      "scientific_name": "Barbonymus altus",
+      "common_name_thai": "ตะเพียนทอง",
+      "local_name": "หางแดง, อีแจะ",
+      "family": "Cyprinidae",
+      "species_id": "barbonymus-altus"
+    },
+    {
+      "model_index": 3,
       "training_label": "075_หมักบาน_ตะกาก",
       "catalog_number": 75,
       "scientific_name": "Cosmochilus harmandi",
@@ -43,7 +53,17 @@
       "species_id": "cosmochilus-harmandi"
     },
     {
-      "model_index": 3,
+      "model_index": 4,
+      "training_label": "082_โจกไหม_โจกไหม",
+      "catalog_number": 82,
+      "scientific_name": "Cyclocheilos furcatus",
+      "common_name_thai": "โจกไหม",
+      "local_name": "โจกไหม",
+      "family": "Cyprinidae",
+      "species_id": "cyclocheilos-furcatus"
+    },
+    {
+      "model_index": 5,
       "training_label": "085_ปากหนวด_จาด",
       "catalog_number": 85,
       "scientific_name": "Hypsibarbus malcolmi",
@@ -53,7 +73,27 @@
       "species_id": "hypsibarbus-malcolmi"
     },
     {
-      "model_index": 4,
+      "model_index": 6,
+      "training_label": "087_ปากคำ_ตะพาก",
+      "catalog_number": 87,
+      "scientific_name": "Hypsibarbus wetmorei",
+      "common_name_thai": "ตะพาก",
+      "local_name": "ปากคำ",
+      "family": "Cyprinidae",
+      "species_id": "hypsibarbus-wetmorei"
+    },
+    {
+      "model_index": 7,
+      "training_label": "092_เกเกาะครีบเหลือง_หนามหลัง",
+      "catalog_number": 92,
+      "scientific_name": "Mystacoleucus obtusirostris",
+      "common_name_thai": "หนามหลัง",
+      "local_name": "เกเกาะครีบเหลือง",
+      "family": "Cyprinidae",
+      "species_id": "mystacoleucus-obtusirostris"
+    },
+    {
+      "model_index": 8,
       "training_label": "096_สะกางเกสูง_วี",
       "catalog_number": 96,
       "scientific_name": "Puntioplites falcifer",
@@ -63,7 +103,7 @@
       "species_id": "puntioplites-falcifer"
     },
     {
-      "model_index": 5,
+      "model_index": 9,
       "training_label": "100_หมักมาง_น้ำฝาย",
       "catalog_number": 100,
       "scientific_name": "Sikukia gudgeri",
@@ -73,7 +113,57 @@
       "species_id": "sikukia-gudgeri"
     },
     {
-      "model_index": 6,
+      "model_index": 10,
+      "training_label": "127_อีไท_สร้อยนกเขา",
+      "catalog_number": 127,
+      "scientific_name": "Osteochilus vittatus",
+      "common_name_thai": "สร้อยนกเขา",
+      "local_name": "อีไท",
+      "family": "Cyprinidae",
+      "species_id": "osteochilus-vittatus"
+    },
+    {
+      "model_index": 11,
+      "training_label": "139_เพียะ, อีตู้, อีกำ_กาดำ",
+      "catalog_number": 139,
+      "scientific_name": "Labeo chrysophekadion",
+      "common_name_thai": "กาดำ",
+      "local_name": "เพียะ, อีตู้, อีกำ",
+      "family": "Cyprinidae",
+      "species_id": "labeo-chrysophekadion"
+    },
+    {
+      "model_index": 12,
+      "training_label": "141_หว่า_หว้า",
+      "catalog_number": 141,
+      "scientific_name": "Labeo pierrei",
+      "common_name_thai": "หว้า",
+      "local_name": "หว่า",
+      "family": "Cyprinidae",
+      "species_id": "labeo-pierrei"
+    },
+    {
+      "model_index": 13,
+      "training_label": "145_สะอี_สะอี",
+      "catalog_number": 145,
+      "scientific_name": "Mekongina erythrospila",
+      "common_name_thai": "สะอี",
+      "local_name": "สะอี",
+      "family": "Cyprinidae",
+      "species_id": "mekongina-erythrospila"
+    },
+    {
+      "model_index": 14,
+      "training_label": "180_แตบ_แปบ",
+      "catalog_number": 180,
+      "scientific_name": "Paralaubuca typus",
+      "common_name_thai": "แปบ",
+      "local_name": "แตบ",
+      "family": "Xenocyprididae",
+      "species_id": "paralaubuca-typus"
+    },
+    {
+      "model_index": 15,
       "training_label": "186_แข้ควาย_แค้ควาย",
       "catalog_number": 186,
       "scientific_name": "Bagarius lica",
@@ -83,7 +173,7 @@
       "species_id": "bagarius-lica"
     },
     {
-      "model_index": 7,
+      "model_index": 16,
       "training_label": "191_ขบ_คางเบือน",
       "catalog_number": 191,
       "scientific_name": "Belodontichthys truncatus",
@@ -93,7 +183,37 @@
       "species_id": "belodontichthys-truncatus"
     },
     {
-      "model_index": 8,
+      "model_index": 17,
+      "training_label": "192_ดังแดง, เจ๊ก_ดังแดง",
+      "catalog_number": 192,
+      "scientific_name": "Hemisilurus mekongensis",
+      "common_name_thai": "ดังแดง",
+      "local_name": "ดังแดง, เจ๊ก",
+      "family": "Siluridae",
+      "species_id": "hemisilurus-mekongensis"
+    },
+    {
+      "model_index": 18,
+      "training_label": "200_นางสะงั้ว_สะงั่ว",
+      "catalog_number": 200,
+      "scientific_name": "Phalacronotus micronemus",
+      "common_name_thai": "สะงั่ว",
+      "local_name": "นางสะงั้ว",
+      "family": "Siluridae",
+      "species_id": "phalacronotus-micronemus"
+    },
+    {
+      "model_index": 19,
+      "training_label": "210_หนู, หอย_สวายหนู",
+      "catalog_number": 210,
+      "scientific_name": "Helicophagus leptorhynchus",
+      "common_name_thai": "สวายหนู",
+      "local_name": "หนู, หอย",
+      "family": "Pangasiidae",
+      "species_id": "helicophagus-leptorhynchus"
+    },
+    {
+      "model_index": 20,
       "training_label": "219_ยอนตาโป_สังกะวาดท้องคม",
       "catalog_number": 219,
       "scientific_name": "Pseudolais pleurotaenia",
@@ -103,7 +223,7 @@
       "species_id": "pseudolais-pleurotaenia"
     },
     {
-      "model_index": 9,
+      "model_index": 21,
       "training_label": "226_กดเหลือง_กดเหลือง",
       "catalog_number": 226,
       "scientific_name": "Hemibagrus spilopterus",
@@ -113,7 +233,7 @@
       "species_id": "hemibagrus-spilopterus"
     },
     {
-      "model_index": 10,
+      "model_index": 22,
       "training_label": "228_เคิง_กดแก้ว",
       "catalog_number": 228,
       "scientific_name": "Hemibagrus wyckioides",
@@ -121,6 +241,16 @@
       "local_name": "เคิง",
       "family": "Bagridae",
       "species_id": "hemibagrus-wyckioides"
+    },
+    {
+      "model_index": 23,
+      "training_label": "244_บู่ทราย_บู่ทราย",
+      "catalog_number": 244,
+      "scientific_name": "Oxyeleotris marmorata",
+      "common_name_thai": "บู่ทราย",
+      "local_name": "บู่ทราย",
+      "family": "Eleotridae",
+      "species_id": "oxyeleotris-marmorata"
     }
   ]
 }
