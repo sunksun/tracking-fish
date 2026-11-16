@@ -138,16 +138,6 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="ClassifyTab"
-        component={ClassifyStack}
-        options={{
-          tabBarLabel: 'จำแนกปลา',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="camera" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="RecordTab"
         component={RecordStack}
         options={({ route }) => ({
@@ -157,6 +147,16 @@ function MainTabs() {
             <MaterialCommunityIcons name="plus-circle" color={color} size={size} />
           ),
         })}
+      />
+      <Tab.Screen
+        name="ClassifyTab"
+        component={ClassifyStack}
+        options={{
+          tabBarLabel: 'จำแนกปลา',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="camera" color={color} size={size} />
+          ),
+        }}
       />
       <Tab.Screen
         name="HistoryTab"
