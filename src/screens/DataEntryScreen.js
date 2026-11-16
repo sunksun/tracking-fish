@@ -1,22 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Platform, Alert, Modal } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform, Alert, Modal, Pressable } from 'react-native';
 import {
   Button,
-  Card,
   Text,
   TextInput,
-  Checkbox,
-  RadioButton,
-  Chip,
-  Divider
+  Icon,
 } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // import MapView, { Marker } from 'react-native-maps';
 import MapPlaceholder from '../components/MapPlaceholder';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { FirebaseService } from '../services/FirebaseService';
+
+// Shared River palette (matches HomeScreen)
+const colors = {
+  riverDeep: '#0E4D5C',
+  riverMid: '#1B7A8C',
+  gold: '#E8A33D',
+  sand: '#F2EDE4',
+  surface: '#FBF9F5',
+  clay: '#C65A3A',
+  ink: '#123038',
+  inkSoft: '#5A6B70',
+  hairline: '#E3DCCF',
+  tealWash: '#E2EEF0',
+};
+
+// Section wrapper: a quiet hairline panel with a title and optional required dot
+function Section({ title, required, children, action }) {
+  return (
+    <View style={styles.panel}>
+      <View style={styles.panelHead}>
+        <View style={styles.panelTitleWrap}>
+          <Text style={styles.panelTitle}>{title}</Text>
+          {required && <View style={styles.reqDot} />}
+        </View>
+        {action}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+// Selectable pill (replaces Paper Chip) — teal wash when active, readable in sun
+function Pill({ label, selected, onPress, style }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.pill, selected && styles.pillSelected, style]}
+      android_ripple={{ color: 'rgba(27,122,140,0.12)' }}
+    >
+      <Text style={[styles.pillText, selected && styles.pillTextSelected]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 const WATER_SOURCES = [
   'คก',
@@ -57,17 +98,15 @@ const FISHING_GEAR = [
 ];
 
 const TIME_PERIODS = [
-  'เช้า',
   'กลางวัน',
-  'เย็น'
+  'กลางคืน'
 ];
 
 export default function DataEntryScreen({ navigation }) {
   const { currentEntry, updateCurrentEntry } = useFishingData();
-  
+  const insets = useSafeAreaInsets();
+
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showGearModal, setShowGearModal] = useState(false);
   const [selectedGear, setSelectedGear] = useState('');
   const [fishingSpots, setFishingSpots] = useState([]);
@@ -84,8 +123,7 @@ export default function DataEntryScreen({ navigation }) {
     weather: currentEntry.weather || '',
     fishingGear: currentEntry.fishingGear || null,
     startTime: currentEntry.startTime || '',
-    endTime: currentEntry.endTime || '',
-    totalWeight: currentEntry.totalWeight || ''
+    endTime: currentEntry.endTime || ''
   });
 
   const [gearDetails, setGearDetails] = useState({
@@ -245,12 +283,9 @@ export default function DataEntryScreen({ navigation }) {
     setShowGearModal(true);
   };
 
-  const handleStartTimeSelect = (time) => {
+  // เลือกช่วงเวลาที่ออกจับปลา (กลางวัน/กลางคืน) เก็บใน startTime
+  const handlePeriodSelect = (time) => {
     setLocalData({ ...localData, startTime: time });
-  };
-
-  const handleEndTimeSelect = (time) => {
-    setLocalData({ ...localData, endTime: time });
   };
 
   const handleGearModalSave = () => {
@@ -291,46 +326,6 @@ export default function DataEntryScreen({ navigation }) {
     }
   };
 
-  const calculateHours = () => {
-    if (!localData.startTime || !localData.endTime) return null;
-    
-    // กำหนดเวลาช่วงต่างๆ (ใช้เวลากลางของแต่ละช่วง)
-    const timeMap = {
-      'เช้า': 8,      // 6-10 โมง (กลางคือ 8 โมง)
-      'กลางวัน': 14,  // 10-18 โมง (กลางคือ 14 โมง) 
-      'เย็น': 20      // 18-22 โมง (กลางคือ 20 โมง)
-    };
-    
-    const startHour = timeMap[localData.startTime];
-    const endHour = timeMap[localData.endTime];
-    
-    if (startHour === undefined || endHour === undefined) return null;
-    
-    // คำนวณจำนวนชั่วโมง
-    let hours = endHour - startHour;
-    
-    // ถ้าเวลาสิ้นสุดน้อยกว่าเวลาเริ่ม แสดงว่าข้ามวัน
-    if (hours <= 0) {
-      hours = (24 - startHour) + endHour;
-    }
-    
-    return hours;
-  };
-
-  const getHoursDisplay = () => {
-    const hours = calculateHours();
-    if (hours === null) return '';
-    
-    if (hours === 0) {
-      return 'เวลาเดียวกัน';
-    } else if (hours === 1) {
-      return '1 ชั่วโมง';
-    } else {
-      return `${hours} ชั่วโมง`;
-    }
-  };
-
-
   const handleDateChange = (event, selectedDate) => {
     console.log('handleDateChange called:', event, selectedDate);
     setShowDatePicker(false);
@@ -339,20 +334,6 @@ export default function DataEntryScreen({ navigation }) {
       const normalizedDate = new Date(selectedDate);
       normalizedDate.setHours(12, 0, 0, 0);
       setLocalData({ ...localData, date: normalizedDate });
-    }
-  };
-
-  const handleStartTimeChange = (event, selectedTime) => {
-    setShowStartTimePicker(false);
-    if (selectedTime) {
-      setLocalData({ ...localData, startTime: selectedTime });
-    }
-  };
-
-  const handleEndTimeChange = (event, selectedTime) => {
-    setShowEndTimePicker(false);
-    if (selectedTime) {
-      setLocalData({ ...localData, endTime: selectedTime });
     }
   };
 
@@ -457,272 +438,164 @@ export default function DataEntryScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── Header band: step 1 of the recording flow ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <Text style={styles.stepLabel}>ขั้นที่ 1 จาก 3</Text>
+        <Text style={styles.headerTitle}>บันทึกการจับปลา</Text>
+        <Text style={styles.headerSub}>กรอกข้อมูลการออกจับของวันนี้</Text>
+      </View>
+
       <View style={styles.content}>
         {/* Date Selection */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              วันที่บันทึก
-            </Text>
-            <Button
-              mode="outlined"
-              onPress={() => {
-                console.log('Date picker button pressed, Platform:', Platform.OS);
-                setShowDatePicker(true);
-              }}
-              style={styles.dateButton}
-              icon="calendar"
-            >
-              {formatDateThai(localData.date)}
-            </Button>
-          </Card.Content>
-        </Card>
+        <Section title="วันที่บันทึก">
+          <Pressable
+            onPress={() => setShowDatePicker(true)}
+            style={styles.dateField}
+            android_ripple={{ color: 'rgba(27,122,140,0.1)' }}
+          >
+            <Icon source="calendar" size={20} color={colors.riverMid} />
+            <Text style={styles.dateFieldText}>{formatDateThai(localData.date)}</Text>
+            <Icon source="chevron-down" size={20} color={colors.inkSoft} />
+          </Pressable>
+        </Section>
 
+        {/* Water Source */}
+        <Section title="แหล่งน้ำ" required>
+          <Text style={styles.hint}>เลือก 1 แหล่ง</Text>
+          <View style={styles.pillWrap}>
+            {WATER_SOURCES.map(source => (
+              <Pill
+                key={source}
+                label={source}
+                selected={localData.waterSource === source}
+                onPress={() => handleWaterSourceSelect(source)}
+              />
+            ))}
+          </View>
+        </Section>
 
-            {/* Water Source */}
-            <Card style={styles.card}>
-              <Card.Content>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  แหล่งน้ำ (เลือก 1 ข้อ)
-                </Text>
-                <View style={styles.chipContainer}>
-                  {WATER_SOURCES.map(source => (
-                    <Chip
-                      key={source}
-                      mode="outlined"
-                      selected={localData.waterSource === source}
-                      onPress={() => handleWaterSourceSelect(source)}
-                      style={[
-                        styles.chip,
-                        localData.waterSource === source && styles.selectedChip
-                      ]}
-                    >
-                      {source}
-                    </Chip>
-                  ))}
-                </View>
-              </Card.Content>
-            </Card>
+        {/* Weather */}
+        <Section title="สภาพอากาศ">
+          <Text style={styles.hint}>เลือก 1 สภาพ</Text>
+          <View style={styles.pillWrap}>
+            {WEATHER_OPTIONS.map(weather => (
+              <Pill
+                key={weather}
+                label={weather}
+                selected={localData.weather === weather}
+                onPress={() => handleWeatherSelect(weather)}
+              />
+            ))}
+          </View>
+        </Section>
 
-            {/* Weather */}
-            <Card style={styles.card}>
-              <Card.Content>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  สภาพอากาศ (เลือก 1 ข้อ)
-                </Text>
-                <View style={styles.chipContainer}>
-                  {WEATHER_OPTIONS.map(weather => (
-                    <Chip
-                      key={weather}
-                      mode="outlined"
-                      selected={localData.weather === weather}
-                      onPress={() => handleWeatherSelect(weather)}
-                      style={[
-                        styles.chip,
-                        localData.weather === weather && styles.selectedChip
-                      ]}
-                    >
-                      {weather}
-                    </Chip>
-                  ))}
-                </View>
-              </Card.Content>
-            </Card>
+        {/* Fishing Gear */}
+        <Section title="เครื่องมือที่ใช้" required>
+          <Text style={styles.hint}>เลือก 1 เครื่องมือ แล้วกรอกรายละเอียด</Text>
+          <View style={styles.pillWrap}>
+            {FISHING_GEAR.map(gear => (
+              <Pill
+                key={gear}
+                label={gear}
+                selected={localData.fishingGear?.name === gear}
+                onPress={() => handleFishingGearSelect(gear)}
+              />
+            ))}
+          </View>
+          {localData.fishingGear && (
+            <View style={styles.gearSummary}>
+              <Icon source="information-outline" size={16} color={colors.riverMid} />
+              <Text style={styles.gearSummaryText}>{getGearDisplayText()}</Text>
+            </View>
+          )}
+        </Section>
 
-            {/* Fishing Gear */}
-            <Card style={styles.card}>
-              <Card.Content>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  เครื่องมือที่ใช้ (เลือก 1 ข้อ) <Text style={{ color: 'red' }}>*</Text>
-                </Text>
-                <View style={styles.chipContainer}>
-                  {FISHING_GEAR.map(gear => (
-                    <Chip
-                      key={gear}
-                      mode="outlined"
-                      selected={localData.fishingGear?.name === gear}
-                      onPress={() => handleFishingGearSelect(gear)}
-                      style={[
-                        styles.chip,
-                        localData.fishingGear?.name === gear && styles.selectedChip
-                      ]}
-                    >
-                      {gear}
-                    </Chip>
-                  ))}
-                </View>
-                {localData.fishingGear && (
-                  <Text variant="bodySmall" style={styles.gearDetailsText}>
-                    {getGearDisplayText()}
-                  </Text>
-                )}
-              </Card.Content>
-            </Card>
-
-            {/* Time Selection */}
-            <Card style={styles.card}>
-              <Card.Content>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  เวลาการใช้เครื่องมือ
-                </Text>
-                
-                <Text variant="bodyMedium" style={styles.subTitle}>
-                  เวลาลงเครื่องมือ (เลือก 1 ข้อ)
-                </Text>
-                <View style={styles.timeChipRow}>
-                  {TIME_PERIODS.map(time => (
-                    <Chip
-                      key={time}
-                      mode="outlined"
-                      selected={localData.startTime === time}
-                      onPress={() => handleStartTimeSelect(time)}
-                      style={[
-                        styles.timeChip,
-                        localData.startTime === time && styles.selectedChip
-                      ]}
-                    >
-                      {time}
-                    </Chip>
-                  ))}
-                </View>
-
-                <Text variant="bodyMedium" style={styles.subTitle}>
-                  เวลากู้เครื่องมือ (เลือก 1 ข้อ)
-                </Text>
-                <View style={styles.timeChipRow}>
-                  {TIME_PERIODS.map(time => (
-                    <Chip
-                      key={time}
-                      mode="outlined"
-                      selected={localData.endTime === time}
-                      onPress={() => handleEndTimeSelect(time)}
-                      style={[
-                        styles.timeChip,
-                        localData.endTime === time && styles.selectedChip
-                      ]}
-                    >
-                      {time}
-                    </Chip>
-                  ))}
-                </View>
-
-                {/* Hours Calculation Display */}
-                {localData.startTime && localData.endTime && (
-                  <View style={styles.hoursDisplay}>
-                    <Text variant="bodySmall" style={styles.hoursText}>
-                      💡 ระยะเวลาใช้เครื่องมือ: {getHoursDisplay()}
-                    </Text>
-                  </View>
-                )}
-              </Card.Content>
-            </Card>
-
-            {/* Total Weight */}
-            <Card style={styles.card}>
-              <Card.Content>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  ผลจับรวม
-                </Text>
-                
-                <Text variant="bodyMedium" style={styles.subTitle}>
-                  น้ำหนักปลาที่จับได้ทั้งหมด (กิโลกรัม)
-                </Text>
-                <TextInput
-                  value={localData.totalWeight}
-                  onChangeText={(value) => setLocalData({ ...localData, totalWeight: value })}
-                  keyboardType="numeric"
-                  mode="outlined"
-                  placeholder="0.00"
-                  style={styles.weightInput}
-                />
-              </Card.Content>
-            </Card>
+        {/* Fishing Period */}
+        <Section title="ช่วงเวลาที่ออกจับ">
+          <Text style={styles.hint}>เลือก 1 ช่วง</Text>
+          <View style={styles.timeRow}>
+            {TIME_PERIODS.map(time => (
+              <Pill
+                key={time}
+                label={time}
+                selected={localData.startTime === time}
+                onPress={() => handlePeriodSelect(time)}
+                style={styles.timePill}
+              />
+            ))}
+          </View>
+        </Section>
 
         {/* Location Section */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.sectionHeader}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                ตำแหน่งการจับปลา <Text style={{ color: 'red' }}>*</Text>
-              </Text>
-              <Button
-                mode="text"
-                compact
-                onPress={async () => {
-                  try {
-                    // ล้าง cache และโหลดใหม่
-                    console.log('🗑️ Clearing fishing spots cache...');
-                    await AsyncStorage.removeItem('fishing_spots_cache');
-                    await AsyncStorage.removeItem('fishing_spots_cache_time');
-                    console.log('✅ Cache cleared, loading fresh data...');
-                    loadFishingSpots();
-                    Alert.alert('สำเร็จ', 'กำลังโหลดจุดจับปลาใหม่จาก Firebase...');
-                  } catch (error) {
-                    console.error('❌ Error clearing cache:', error);
-                    Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
-                  }
-                }}
-                style={styles.refreshButton}
-              >
-                รีเฟรช
-              </Button>
-            </View>
+        <Section
+          title="ตำแหน่งการจับปลา"
+          required
+          action={
+            <Pressable
+              onPress={async () => {
+                try {
+                  console.log('🗑️ Clearing fishing spots cache...');
+                  await AsyncStorage.removeItem('fishing_spots_cache');
+                  await AsyncStorage.removeItem('fishing_spots_cache_time');
+                  console.log('✅ Cache cleared, loading fresh data...');
+                  loadFishingSpots();
+                  Alert.alert('สำเร็จ', 'กำลังโหลดจุดจับปลาใหม่จาก Firebase...');
+                } catch (error) {
+                  console.error('❌ Error clearing cache:', error);
+                  Alert.alert('ข้อผิดพลาด', 'ไม่สามารถล้างข้อมูลได้: ' + error.message);
+                }
+              }}
+              hitSlop={8}
+            >
+              <Text style={styles.refreshLink}>รีเฟรช</Text>
+            </Pressable>
+          }
+        >
+          <Text style={styles.hint}>พบ {fishingSpots.length} จุด · เลือก 1 จุด</Text>
 
-            <Text variant="bodySmall" style={styles.spotCount}>
-              พบ {fishingSpots.length} จุด
-            </Text>
-
-            {loadingSpots ? (
-              <View style={styles.locationSection}>
-                <Text variant="bodyMedium" style={styles.locationDescription}>
-                  กำลังโหลดจุดจับปลา...
-                </Text>
+          {loadingSpots ? (
+            <Text style={styles.loadingText}>กำลังโหลดจุดจับปลา…</Text>
+          ) : (
+            <>
+              <View style={styles.pillWrap}>
+                {fishingSpots.map((spot) => (
+                  <Pill
+                    key={spot.id}
+                    label={spot.spotName}
+                    selected={selectedSpot?.id === spot.id}
+                    onPress={() => handleSpotSelect(spot)}
+                  />
+                ))}
               </View>
-            ) : (
-              <View style={styles.spotsContainer}>
-                <View style={styles.spotsGrid}>
-                  {fishingSpots.map((spot) => (
-                    <Chip
-                      key={spot.id}
-                      mode="outlined"
-                      selected={selectedSpot?.id === spot.id}
-                      onPress={() => handleSpotSelect(spot)}
-                      style={[
-                        styles.spotChip,
-                        selectedSpot?.id === spot.id && styles.selectedSpotChip
-                      ]}
-                    >
-                      {spot.spotName}
-                    </Chip>
-                  ))}
+
+              {selectedSpot && (
+                <View style={styles.coordBox}>
+                  <Text style={styles.coordLabel}>พิกัด</Text>
+                  <Text style={styles.coordValue}>
+                    {customLocation
+                      ? `${customLocation.actualLat.toFixed(6)}, ${customLocation.actualLng.toFixed(6)}`
+                      : `${selectedSpot.latitude?.toFixed(6)}, ${selectedSpot.longitude?.toFixed(6)}`}
+                  </Text>
                 </View>
-
-                {selectedSpot && (
-                  <View style={styles.selectedSpotInfo}>
-                    {/* แสดงพิกัดปัจจุบัน */}
-                    <Text variant="bodyMedium" style={styles.coordinatesText}>
-                      พิกัด: {customLocation ?
-                        `${customLocation.actualLat.toFixed(6)}, ${customLocation.actualLng.toFixed(6)}` :
-                        `${selectedSpot.latitude?.toFixed(6)}, ${selectedSpot.longitude?.toFixed(6)}`
-                      }
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </Card.Content>
-        </Card>
+              )}
+            </>
+          )}
+        </Section>
 
         {/* Continue Button */}
-        <Button
-          mode="contained"
+        <Pressable
           onPress={validateAndContinue}
-          style={styles.continueButton}
-          contentStyle={styles.buttonContent}
+          style={({ pressed }) => [styles.continueButton, pressed && styles.continuePressed]}
+          android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
         >
-          เพิ่มรายการปลา
-        </Button>
+          <Text style={styles.continueText}>เพิ่มรายการปลา</Text>
+          <Icon source="arrow-right" size={22} color={colors.surface} />
+        </Pressable>
 
         {/* Date/Time Pickers */}
         {showDatePicker && (
@@ -750,7 +623,7 @@ export default function DataEntryScreen({ navigation }) {
                   style={styles.dateTimePicker}
                   locale="th-TH"
                   textColor={Platform.OS === 'ios' ? '#000' : undefined}
-                  accentColor="#2196F3"
+                  accentColor={colors.riverMid}
                 />
                 <View style={styles.modalButtons}>
                   <Button 
@@ -760,96 +633,11 @@ export default function DataEntryScreen({ navigation }) {
                   >
                     ยกเลิก
                   </Button>
-                  <Button 
-                    mode="contained" 
+                  <Button
+                    mode="contained"
                     onPress={() => setShowDatePicker(false)}
                     style={styles.modalButton}
-                  >
-                    ตกลง
-                  </Button>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        )}
-
-        {showStartTimePicker && (
-          <Modal
-            visible={showStartTimePicker}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowStartTimePicker(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text variant="titleMedium" style={styles.modalTitle}>
-                  เลือกเวลาลงเครื่องมือ
-                </Text>
-                <DateTimePicker
-                  value={localData.startTime || new Date()}
-                  mode="time"
-                  display="spinner"
-                  onChange={handleStartTimeChange}
-                  is24Hour={true}
-                  style={styles.dateTimePicker}
-                  locale="th-TH"
-                  textColor="#000"
-                />
-                <View style={styles.modalButtons}>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => setShowStartTimePicker(false)}
-                    style={styles.modalButton}
-                  >
-                    ยกเลิก
-                  </Button>
-                  <Button 
-                    mode="contained" 
-                    onPress={() => setShowStartTimePicker(false)}
-                    style={styles.modalButton}
-                  >
-                    ตกลง
-                  </Button>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        )}
-
-        {showEndTimePicker && (
-          <Modal
-            visible={showEndTimePicker}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowEndTimePicker(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text variant="titleMedium" style={styles.modalTitle}>
-                  เลือกเวลากู้เครื่องมือ
-                </Text>
-                <DateTimePicker
-                  value={localData.endTime || new Date()}
-                  mode="time"
-                  display="spinner"
-                  onChange={handleEndTimeChange}
-                  is24Hour={true}
-                  style={styles.dateTimePicker}
-                  locale="th-TH"
-                  textColor="#000"
-                />
-                <View style={styles.modalButtons}>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => setShowEndTimePicker(false)}
-                    style={styles.modalButton}
-                  >
-                    ยกเลิก
-                  </Button>
-                  <Button 
-                    mode="contained" 
-                    onPress={() => setShowEndTimePicker(false)}
-                    style={styles.modalButton}
+                    buttonColor={colors.riverDeep}
                   >
                     ตกลง
                   </Button>
@@ -975,6 +763,7 @@ export default function DataEntryScreen({ navigation }) {
                     mode="contained"
                     onPress={handleGearModalSave}
                     style={styles.modalButton}
+                    buttonColor={colors.riverDeep}
                     disabled={
                       !gearDetails.quantity ||
                       (selectedGear === 'เบ็ดน้ำเต้า' && !gearDetails.size) ||
@@ -1041,6 +830,7 @@ export default function DataEntryScreen({ navigation }) {
                     mode="contained"
                     onPress={handleConfirmLocation}
                     style={styles.mapConfirmButton}
+                    buttonColor={colors.riverDeep}
                   >
                     ยืนยันตำแหน่ง
                   </Button>
@@ -1057,73 +847,232 @@ export default function DataEntryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.sand,
   },
+
+  // Header band
+  header: {
+    backgroundColor: colors.riverDeep,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+  },
+  stepLabel: {
+    color: colors.gold,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  headerTitle: {
+    color: colors.surface,
+    fontSize: 25,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  headerSub: {
+    color: 'rgba(242,237,228,0.75)',
+    fontSize: 14,
+    marginTop: 4,
+  },
+
   content: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+
+  // Section panel (quiet hairline, no shadow)
+  panel: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     padding: 16,
-  },
-  card: {
     marginBottom: 16,
-    elevation: 2,
   },
-  sectionTitle: {
+  panelHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
-    fontWeight: 'bold',
-    color: '#2196F3',
   },
-  subTitle: {
-    marginBottom: 8,
-    marginTop: 8,
-    fontWeight: '500',
-  },
-  dateButton: {
-    marginTop: 8,
-  },
-  checkboxRow: {
+  panelTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  checkboxLabel: {
-    marginLeft: 8,
-    flex: 1,
+  panelTitle: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: '800',
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+  reqDot: {
+    width: 7,
+    height: 7,
     borderRadius: 4,
-    marginBottom: 8,
+    backgroundColor: colors.gold,
+    marginLeft: 7,
   },
-  picker: {
-    height: 50,
+  hint: {
+    color: colors.inkSoft,
+    fontSize: 13,
+    marginBottom: 10,
   },
-  chipContainer: {
+
+  // Date field
+  dateField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    backgroundColor: '#fff',
+  },
+  dateFieldText: {
+    flex: 1,
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Pills
+  pillWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  chip: {
-    marginRight: 8,
-    marginBottom: 8,
+  pill: {
+    paddingVertical: 9,
+    paddingHorizontal: 15,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: '#fff',
   },
-  selectedChip: {
-    backgroundColor: '#2196F3',
+  pillSelected: {
+    backgroundColor: colors.tealWash,
+    borderColor: colors.riverMid,
   },
-  gearDetailsText: {
-    marginTop: 12,
+  pillText: {
+    color: colors.inkSoft,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pillTextSelected: {
+    color: colors.riverDeep,
+    fontWeight: '800',
+  },
+  timeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  timePill: {
+    flex: 1,
+    alignItems: 'center',
+  },
+
+  // Gear summary
+  gearSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    color: '#2196F3',
-    fontStyle: 'italic',
+    borderTopColor: colors.hairline,
+  },
+  gearSummaryText: {
+    flex: 1,
+    color: colors.riverDeep,
+    fontSize: 13.5,
+    fontWeight: '600',
+  },
+
+
+  // Location
+  refreshLink: {
+    color: colors.riverMid,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  loadingText: {
+    color: colors.inkSoft,
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
+  coordBox: {
+    marginTop: 14,
+    backgroundColor: colors.sand,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  coordLabel: {
+    color: colors.inkSoft,
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  coordValue: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+
+  // Continue button
+  continueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.riverDeep,
+    borderRadius: 16,
+    paddingVertical: 17,
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  continuePressed: {
+    backgroundColor: '#0A3B46',
+  },
+  continueText: {
+    color: colors.surface,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+
+  // ── Modals (date/time, gear) ──
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(18,48,56,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    padding: 22,
+    borderRadius: 20,
+    width: '86%',
+    alignItems: 'center',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    marginBottom: 14,
+    color: colors.ink,
+    fontWeight: '800',
+    fontSize: 18,
   },
   selectedGearText: {
     marginBottom: 16,
-    color: '#666',
+    color: colors.riverMid,
+    fontWeight: '700',
     textAlign: 'center',
   },
   modalInput: {
     marginBottom: 12,
     width: '100%',
+    backgroundColor: '#fff',
   },
   modalScrollView: {
     width: '100%',
@@ -1131,58 +1080,6 @@ const styles = StyleSheet.create({
   },
   modalScrollContent: {
     paddingBottom: 10,
-  },
-  timeChipRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  timeChip: {
-    flex: 1,
-    minWidth: 80,
-  },
-  hoursDisplay: {
-    marginTop: 12,
-    padding: 8,
-    backgroundColor: '#f0f8ff',
-    borderRadius: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#2196F3',
-  },
-  hoursText: {
-    color: '#1976d2',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  weightInput: {
-    marginTop: 8,
-  },
-  continueButton: {
-    marginTop: 16,
-    marginBottom: 32,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '85%',
-    alignItems: 'center',
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    marginBottom: 16,
-    color: '#2196F3',
-    fontWeight: 'bold',
   },
   dateTimePicker: {
     width: '100%',
@@ -1196,94 +1093,24 @@ const styles = StyleSheet.create({
   modalButton: {
     minWidth: 80,
   },
-  // Location styles
-  locationSection: {
-    marginTop: 8,
-  },
-  locationDescription: {
-    marginBottom: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  spotsContainer: {
-    marginTop: 8,
-  },
-  spotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  spotChip: {
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  selectedSpotChip: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#2196F3',
-  },
-  selectedSpotInfo: {
-    backgroundColor: '#f8f9fa',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  spotTitle: {
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 8,
-  },
-  coordinatesText: {
-    fontFamily: 'monospace',
-    backgroundColor: '#f5f5f5',
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  spotDescription: {
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  accuracyText: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  distanceText: {
-    color: '#ff9800',
-    fontSize: 12,
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  mapActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    gap: 8,
-  },
-  mapButton: {
-    flex: 1,
-  },
-  resetButton: {
-    flex: 1,
-  },
-  // Map Modal Styles
+
+  // ── Map Modal ──
   mapContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   mapHeader: {
     padding: 16,
-    backgroundColor: '#2196F3',
-    paddingTop: 50, // Safe area
+    backgroundColor: colors.riverDeep,
+    paddingTop: 50,
   },
   mapTitle: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: colors.surface,
+    fontWeight: '800',
     marginBottom: 4,
   },
   mapSubtitle: {
-    color: '#e3f2fd',
+    color: 'rgba(242,237,228,0.8)',
     fontSize: 14,
   },
   map: {
@@ -1291,27 +1118,25 @@ const styles = StyleSheet.create({
   },
   mapFooter: {
     padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.sand,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: colors.hairline,
   },
   coordinateDisplay: {
     marginBottom: 16,
   },
   coordinateLabel: {
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 4,
+    color: colors.ink,
   },
   coordinateValue: {
-    fontFamily: 'monospace',
-    backgroundColor: '#f5f5f5',
+    fontVariant: ['tabular-nums'],
+    backgroundColor: '#fff',
     padding: 8,
-    borderRadius: 4,
+    borderRadius: 6,
     marginBottom: 4,
-  },
-  distanceValue: {
-    color: '#ff9800',
-    fontWeight: '500',
+    color: colors.ink,
   },
   mapButtons: {
     flexDirection: 'row',
@@ -1322,19 +1147,5 @@ const styles = StyleSheet.create({
   },
   mapConfirmButton: {
     flex: 1,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  refreshButton: {
-    marginRight: -8,
-  },
-  spotCount: {
-    color: '#666',
-    marginBottom: 8,
-    fontStyle: 'italic',
   },
 });

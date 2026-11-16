@@ -1,35 +1,29 @@
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Button, Card, Text, Icon, IconButton } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert, Pressable } from 'react-native';
+import { Button, Text, Icon } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useState, useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useMemo } from 'react';
 import { useFishingData } from '../contexts/FishingDataContext';
 import { useAuth } from '../contexts/AuthContext';
 
+// River-inspired palette (Mekong): deep water teal, sunlit gold, riverbank sand
+const colors = {
+  riverDeep: '#0E4D5C',
+  riverMid: '#1B7A8C',
+  gold: '#E8A33D',
+  sand: '#F2EDE4',
+  surface: '#FBF9F5',
+  clay: '#C65A3A',
+  ink: '#123038',
+  inkSoft: '#5A6B70',
+  hairline: '#E3DCCF',
+};
+
 export default function HomeScreen({ navigation }) {
-  const { fishingHistory, syncWithFirebase } = useFishingData();
+  const { fishingHistory } = useFishingData();
   const { user, selectedFisher, isResearcher, signOut, clearSelectedFisher } = useAuth();
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const tabBarHeight = useBottomTabBarHeight();
-
-  // ฟังก์ชันสำหรับกดปุ่ม refresh
-  const handleRefresh = async () => {
-    if (isRefreshing) return; // ป้องกันการกด refresh ซ้ำ
-
-    setIsRefreshing(true);
-    if (__DEV__) console.log('🔄 Manual refresh triggered...');
-
-    try {
-      if (syncWithFirebase) {
-        await syncWithFirebase();
-      }
-    } catch (error) {
-      console.error('Error refreshing:', error);
-    } finally {
-      setTimeout(() => {
-        setIsRefreshing(false);
-      }, 1000);
-    }
-  };
+  const insets = useSafeAreaInsets();
 
   // Filter fishing history based on selected fisher or current user
   // ใช้ useMemo เพื่อลด re-render และ log ที่ซ้ำ
@@ -106,7 +100,6 @@ export default function HomeScreen({ navigation }) {
     );
   };
 
-
   const getRecentEntries = () => {
     // Sort by date (newest first) then take first 3
     return [...filteredHistory]
@@ -151,22 +144,22 @@ export default function HomeScreen({ navigation }) {
   const formatDate = (dateValue) => {
     try {
       if (!dateValue) return 'ไม่ระบุวันที่';
-      
+
       let date;
-      
+
       // Handle Firestore Timestamp object
       if (dateValue && typeof dateValue === 'object' && dateValue.seconds && dateValue.nanoseconds) {
         // Convert Firestore timestamp to JavaScript Date
         date = new Date(dateValue.seconds * 1000 + dateValue.nanoseconds / 1000000);
-      } 
+      }
       // Handle regular Date object
       else if (dateValue instanceof Date) {
         date = dateValue;
-      } 
+      }
       // Handle string or number
       else if (typeof dateValue === 'string' || typeof dateValue === 'number') {
         date = new Date(dateValue);
-      } 
+      }
       // Handle Firestore Timestamp with toDate() method
       else if (dateValue && typeof dateValue.toDate === 'function') {
         date = dateValue.toDate();
@@ -181,18 +174,18 @@ export default function HomeScreen({ navigation }) {
         if (__DEV__) console.log('Invalid date:', dateValue);
         return 'ไม่ระบุวันที่';
       }
-      
+
       // Format Thai date with Thai month names
       const thaiMonths = [
-        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 
-        'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม',
-        'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.',
+        'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.',
+        'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
       ];
-      
+
       const day = date.getDate();
       const month = thaiMonths[date.getMonth()];
       const year = date.getFullYear() + 543; // Convert to Buddhist Era
-      
+
       return `${day} ${month} ${year}`;
     } catch (error) {
       console.error('Error formatting date:', error, dateValue);
@@ -205,519 +198,470 @@ export default function HomeScreen({ navigation }) {
     return user?.name || user?.phone || 'ผู้ใช้';
   };
 
+  // Aggregate stats from Firebase-backed history (realtime via onSnapshot)
+  const stats = useMemo(() => {
+    const times = filteredHistory.length;
+    const species = filteredHistory.reduce(
+      (total, entry) => total + (entry.fishList?.length || 0), 0);
+    const fishCount = filteredHistory.reduce((total, entry) =>
+      total + (entry.fishList?.reduce(
+        (sum, fish) => sum + (parseInt(fish.count, 10) || 0), 0) || 0), 0);
+    const weight = filteredHistory.reduce(
+      (total, entry) => total + (parseFloat(entry.totalWeight) || 0), 0);
+    return { times, species, fishCount, weight };
+  }, [filteredHistory]);
+
+  const hasData = filteredHistory.length > 0;
+
+  const roleLabel = user?.role === 'researcher' ? 'นักวิจัย' : 'ชาวประมง';
+  const place = user?.village
+    ? [user.village, user.district, user.province].filter(Boolean).join(' · ')
+    : null;
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}
+      contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
+      showsVerticalScrollIndicator={false}
     >
-      <View style={styles.content}>
-        {/* Header with user info and refresh button */}
-        <Card style={[styles.card, styles.headerCard]}>
-          <Card.Content>
-            <View style={styles.headerWithRefresh}>
-              <View style={styles.userInfo}>
-                <Text variant="headlineSmall" style={styles.welcomeText}>
-                  ยินดีต้อนรับ
-                </Text>
-                <Text variant="titleLarge" style={styles.userName}>
-                  {getUserDisplayName()}
-                </Text>
-                {user?.role && (
-                  <Text variant="bodyMedium" style={styles.userDetails}>
-                    🏷️ {user.role === 'researcher' ? 'นักวิจัย' : 'ชาวประมง'}
-                  </Text>
-                )}
-                {user?.village && (
-                  <Text variant="bodyMedium" style={styles.userDetails}>
-                    🏠 {user.village}, {user.district}, {user.province}
-                  </Text>
-                )}
-                {user?.occupation && (
-                  <Text variant="bodyMedium" style={styles.userDetails}>
-                    👨‍🌾 {user.occupation} {user.experience && `(ประสบการณ์ ${user.experience})`}
-                  </Text>
-                )}
-              </View>
-              <IconButton
-                icon="refresh"
-                mode="contained"
-                iconColor="#2196F3"
-                size={28}
-                onPress={handleRefresh}
-                disabled={isRefreshing}
-                animated
-                style={styles.refreshButton}
-              />
-            </View>
-          </Card.Content>
-        </Card>
+      {/* ── Header band: deep river water, curved like a riverbank ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <Text style={styles.greeting}>ยินดีต้อนรับ</Text>
+        <Text style={styles.userName}>{getUserDisplayName()}</Text>
+        <View style={styles.rolePill}>
+          <View style={styles.roleDot} />
+          <Text style={styles.roleText}>{roleLabel}</Text>
+        </View>
+        {place && <Text style={styles.placeText}>{place}</Text>}
+        {user?.occupation ? (
+          <Text style={styles.placeText}>
+            {user.occupation}
+            {user.experience ? `  ·  ประสบการณ์ ${user.experience}` : ''}
+          </Text>
+        ) : null}
+      </View>
 
-        {/* Selected Fisher Card (สำหรับนักวิจัย) */}
+      <View style={styles.body}>
+        {/* ── Researcher: which fisher's data am I viewing ── */}
         {isResearcher && (
-          <Card style={[styles.card, styles.fisherCard]}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.cardTitle}>
-                ข้อมูลชาวประมง
-              </Text>
-              {selectedFisher ? (
-                <>
-                  <View style={styles.selectedFisherInfo}>
-                    <Icon source="account-check" size={40} color="#4caf50" />
-                    <View style={styles.selectedFisherDetails}>
-                      <Text variant="titleMedium" style={styles.selectedFisherName}>
-                        {selectedFisher.name}
+          <View style={styles.fisherPanel}>
+            {selectedFisher ? (
+              <>
+                <View style={styles.fisherRow}>
+                  <View style={styles.fisherAvatar}>
+                    <Icon source="account" size={26} color={colors.riverDeep} />
+                  </View>
+                  <View style={styles.fisherText}>
+                    <Text style={styles.fisherEyebrow}>กำลังดูข้อมูลของ</Text>
+                    <Text style={styles.fisherName}>{selectedFisher.name}</Text>
+                    {(selectedFisher.phone || selectedFisher.village) && (
+                      <Text style={styles.fisherMeta}>
+                        {[selectedFisher.phone, selectedFisher.village]
+                          .filter(Boolean).join('  ·  ')}
                       </Text>
-                      {selectedFisher.phone && (
-                        <Text variant="bodyMedium" style={styles.fisherDetail}>
-                          📱 {selectedFisher.phone}
-                        </Text>
-                      )}
-                      {selectedFisher.village && (
-                        <Text variant="bodyMedium" style={styles.fisherDetail}>
-                          🏠 {selectedFisher.village}
-                        </Text>
-                      )}
-                    </View>
+                    )}
                   </View>
-                  <View style={styles.fisherActions}>
-                    <Button
-                      mode="outlined"
-                      onPress={handleChangeFisher}
-                      style={styles.changeFisherButton}
-                      icon="account-switch"
-                      compact
-                    >
-                      เปลี่ยนชาวประมง
-                    </Button>
-                    <Button
-                      mode="text"
-                      onPress={handleClearFisher}
-                      icon="close"
-                      compact
-                      textColor="#d32f2f"
-                    >
-                      ยกเลิก
-                    </Button>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.noFisherSelected}>
-                  <Icon source="account-alert" size={40} color="#ff9800" />
-                  <Text variant="bodyMedium" style={styles.noFisherText}>
-                    คุณยังไม่ได้เลือกชาวประมง
-                  </Text>
-                  <Text variant="bodySmall" style={styles.noFisherSubtext}>
-                    กรุณาเลือกชาวประมงก่อนบันทึกข้อมูล
-                  </Text>
+                </View>
+                <View style={styles.fisherActions}>
                   <Button
-                    mode="contained"
+                    mode="text"
                     onPress={handleChangeFisher}
-                    style={styles.selectFisherButton}
-                    icon="account-plus"
+                    icon="account-switch"
+                    compact
+                    textColor={colors.riverMid}
                   >
-                    เลือกชาวประมง
+                    เปลี่ยนคน
+                  </Button>
+                  <Button
+                    mode="text"
+                    onPress={handleClearFisher}
+                    icon="close"
+                    compact
+                    textColor={colors.clay}
+                  >
+                    ล้าง
                   </Button>
                 </View>
-              )}
-            </Card.Content>
-          </Card>
+              </>
+            ) : (
+              <View style={styles.noFisher}>
+                <Icon source="account-alert-outline" size={30} color={colors.gold} />
+                <View style={styles.noFisherText}>
+                  <Text style={styles.noFisherTitle}>ยังไม่ได้เลือกชาวประมง</Text>
+                  <Text style={styles.noFisherSub}>เลือกก่อนเริ่มบันทึกข้อมูล</Text>
+                </View>
+                <Button
+                  mode="contained"
+                  onPress={handleChangeFisher}
+                  buttonColor={colors.riverDeep}
+                  compact
+                >
+                  เลือก
+                </Button>
+              </View>
+            )}
+          </View>
         )}
 
-        {/* Quick Stats */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.cardTitle}>
-              สถิติรวม
-            </Text>
-
-            {/* Stats Grid - 2x2 */}
-            <View style={styles.statsGrid}>
-              <View style={styles.statRow}>
-                <Text variant="bodyMedium" style={styles.statLabel}>
-                  จำนวนครั้งที่บันทึก
-                </Text>
-                <Text variant="bodyMedium" style={styles.statValue}>
-                  {filteredHistory.length > 0 ? `${filteredHistory.length} ครั้ง` : '- ครั้ง'}
-                </Text>
-              </View>
-
-              <View style={styles.statRow}>
-                <Text variant="bodyMedium" style={styles.statLabel}>
-                  จำนวนชนิดปลา
-                </Text>
-                <Text variant="bodyMedium" style={styles.statValue}>
-                  {filteredHistory.length > 0
-                    ? `${filteredHistory.reduce((total, entry) => total + (entry.fishList?.length || 0), 0)} ชนิด`
-                    : '- ชนิด'}
-                </Text>
-              </View>
-
-              <View style={styles.statRow}>
-                <Text variant="bodyMedium" style={styles.statLabel}>
-                  จำนวนปลาที่จับได้
-                </Text>
-                <Text variant="bodyMedium" style={styles.statValue}>
-                  {filteredHistory.length > 0
-                    ? `${filteredHistory.reduce((total, entry) => {
-                        return total + (entry.fishList?.reduce((sum, fish) => sum + (parseInt(fish.count, 10) || 0), 0) || 0);
-                      }, 0)} ตัว`
-                    : '- ตัว'}
-                </Text>
-              </View>
-
-              <View style={styles.statRow}>
-                <Text variant="bodyMedium" style={styles.statLabel}>
-                  น้ำหนักรวม
-                </Text>
-                <Text variant="bodyMedium" style={styles.statValue}>
-                  {filteredHistory.length > 0
-                    ? `${filteredHistory.reduce((total, entry) => total + (parseFloat(entry.totalWeight) || 0), 0).toFixed(2)} กก.`
-                    : '- กก.'}
-                </Text>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
-
-        {/* Main Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
-          <Card style={[styles.card, styles.actionCard]}>
-            <Card.Content style={styles.actionCardContent}>
-              <View style={styles.actionIcon}>
-                <Icon source="plus-circle" size={48} color="#4caf50" />
-              </View>
-              <Text variant="titleMedium" style={styles.actionTitle}>
-                เริ่มบันทึกการจับปลา
-              </Text>
-              <Text variant="bodySmall" style={styles.actionSubtitle}>
-                บันทึกข้อมูลการจับปลาใหม่
-              </Text>
-              <Button
-                mode="contained"
-                onPress={handleStartRecording}
-                style={[styles.actionButton, styles.primaryActionButton]}
-                contentStyle={styles.buttonContent}
-                icon="arrow-right"
-              >
-                เริ่มบันทึก
-              </Button>
-            </Card.Content>
-          </Card>
-
-          <Card style={[styles.card, styles.actionCard]}>
-            <Card.Content style={styles.actionCardContent}>
-              <View style={styles.actionIcon}>
-                <Icon source="history" size={48} color="#ff9800" />
-              </View>
-              <Text variant="titleMedium" style={styles.actionTitle}>
-                ดูประวัติการจับปลา
-              </Text>
-              <Text variant="bodySmall" style={styles.actionSubtitle}>
-                ดูข้อมูลการจับปลาที่ผ่านมา
-              </Text>
-              <Button
-                mode="outlined"
-                onPress={() => navigation.navigate('HistoryTab', { screen: 'History' })}
-                style={[styles.actionButton, styles.secondaryActionButton]}
-                contentStyle={styles.buttonContent}
-                icon="arrow-right"
-              >
-                ดูประวัติ
-              </Button>
-            </Card.Content>
-          </Card>
+        {/* ── Stats: the numbers are the hero ── */}
+        <Text style={styles.sectionTitle}>ภาพรวมการบันทึก</Text>
+        <View style={styles.statGrid}>
+          <StatTile value={hasData ? stats.times : '—'} unit="ครั้ง"
+            label="บันทึกแล้ว" accent={colors.riverDeep} big />
+          <StatTile value={hasData ? stats.species : '—'} unit="ชนิด"
+            label="ชนิดปลา" accent={colors.riverMid} big />
+          <StatTile value={hasData ? stats.fishCount : '—'} unit="ตัว"
+            label="จำนวนปลา" accent={colors.riverMid} />
+          <StatTile value={hasData ? stats.weight.toFixed(1) : '—'} unit="กก."
+            label="น้ำหนักรวม" accent={colors.gold} />
         </View>
 
-        {/* Recent Entries Summary */}
-        {filteredHistory.length > 0 && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.cardTitle}>
-                บันทึกล่าสุด
-              </Text>
-              {getRecentEntries().map((entry, index) => (
-                <View key={entry.id || index} style={styles.recentEntry}>
-                  <Text variant="bodyMedium">
-                    {formatDate(entry.date)}
-                  </Text>
-                  <Text variant="bodySmall" style={styles.recentEntryDetail}>
-                    {entry.noFishing
-                      ? 'ไม่ได้จับปลา'
-                      : `จับปลาได้ ${entry.fishList?.length || 0} ชนิด (${entry.totalWeight || '0'} กก.)`
-                    }
-                  </Text>
+        {/* ── Primary action ── */}
+        <Pressable
+          onPress={handleStartRecording}
+          style={({ pressed }) => [styles.primaryAction, pressed && styles.primaryActionPressed]}
+          android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
+        >
+          <View style={styles.primaryIcon}>
+            <Icon source="plus" size={26} color={colors.surface} />
+          </View>
+          <View style={styles.primaryTextWrap}>
+            <Text style={styles.primaryTitle}>เริ่มบันทึกการจับปลา</Text>
+            <Text style={styles.primarySub}>จดข้อมูลการจับปลาของวันนี้</Text>
+          </View>
+          <Icon source="chevron-right" size={26} color="rgba(251,249,245,0.7)" />
+        </Pressable>
+
+        {/* ── Recent entries as a timeline ── */}
+        {hasData && (
+          <>
+            <Text style={styles.sectionTitle}>บันทึกล่าสุด</Text>
+            <View style={styles.timeline}>
+              {getRecentEntries().map((entry, index, arr) => (
+                <View key={entry.id || index} style={styles.timelineRow}>
+                  <View style={styles.timelineMarker}>
+                    <View style={styles.timelineDot} />
+                    {index < arr.length - 1 && <View style={styles.timelineLine} />}
+                  </View>
+                  <View style={styles.timelineContent}>
+                    <Text style={styles.timelineDate}>{formatDate(entry.date)}</Text>
+                    <Text style={styles.timelineDetail}>
+                      {entry.noFishing
+                        ? 'ไม่ได้ออกจับปลา'
+                        : `จับได้ ${entry.fishList?.length || 0} ชนิด  ·  ${entry.totalWeight || '0'} กก.`}
+                    </Text>
+                  </View>
                 </View>
               ))}
-            </Card.Content>
-          </Card>
+            </View>
+          </>
         )}
 
+        {!hasData && (
+          <Text style={styles.emptyNote}>
+            ยังไม่มีบันทึก เริ่มจดการจับปลาครั้งแรกได้เลย
+          </Text>
+        )}
 
-        {/* Logout Button */}
+        {/* ── Sign out ── */}
         <Button
           mode="outlined"
           onPress={handleLogout}
-          style={styles.logoutButton}
-          contentStyle={styles.buttonContent}
           icon="logout"
-          textColor="#d32f2f"
+          textColor={colors.clay}
+          style={styles.logout}
+          contentStyle={styles.logoutContent}
         >
           ออกจากระบบ
         </Button>
-
       </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  // Login Screen Styles
-  loginContainer: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-  },
-  loginContent: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  iconContainer: {
-    marginBottom: 24,
-    padding: 20,
-    backgroundColor: '#e3f2fd',
-    borderRadius: 50,
-  },
-  appTitle: {
-    textAlign: 'center',
-    marginBottom: 32,
-    fontWeight: 'bold',
-    color: '#2196F3',
-  },
-  phoneInput: {
-    width: '100%',
-    marginBottom: 24,
-  },
-  loginButton: {
-    width: '100%',
-    marginBottom: 32,
-  },
-  loginButtonContent: {
-    paddingVertical: 8,
-  },
-  projectTitle: {
-    textAlign: 'center',
-    color: '#666',
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
+// Big number first, small label underneath — the number carries the page
+function StatTile({ value, unit, label, accent, big }) {
+  return (
+    <View style={styles.statTile}>
+      <View style={styles.statValueRow}>
+        <Text style={[styles.statValue, big && styles.statValueBig, { color: accent }]}>
+          {value}
+        </Text>
+        <Text style={styles.statUnit}>{unit}</Text>
+      </View>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
 
-  // Main App Styles
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.sand,
   },
-  content: {
-    padding: 16,
+
+  // Header band
+  header: {
+    backgroundColor: colors.riverDeep,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
-  card: {
-    marginBottom: 16,
-    elevation: 2,
-  },
-  headerCard: {
-    backgroundColor: '#f8f9fa',
-    elevation: 4,
-  },
-  headerWithRefresh: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  userInfo: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  refreshButton: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-  },
-  welcomeText: {
-    color: '#2196F3',
-    fontWeight: 'bold',
-    marginBottom: 4,
+  greeting: {
+    color: 'rgba(242,237,228,0.75)',
+    fontSize: 15,
+    letterSpacing: 0.3,
   },
   userName: {
-    color: '#1976d2',
-    fontWeight: 'bold',
-    marginBottom: 8,
+    color: colors.surface,
+    fontSize: 26,
+    fontWeight: '800',
+    marginTop: 2,
+    lineHeight: 34,
   },
-  userDetails: {
-    color: '#666',
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  statsRow: {
+  rolePill: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 8,
-  },
-  statItem: {
     alignItems: 'center',
-    flex: 1,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: 'rgba(232,163,61,0.18)',
   },
-  statNumber: {
-    color: '#2196F3',
-    fontWeight: 'bold',
-    marginBottom: 4,
+  roleDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.gold,
+    marginRight: 7,
   },
-  statLabel: {
-    color: '#666',
-    textAlign: 'center',
+  roleText: {
+    color: colors.gold,
+    fontSize: 13,
+    fontWeight: '700',
   },
-  actionButtonsContainer: {
-    marginBottom: 16,
-  },
-  actionCard: {
-    elevation: 4,
-    marginBottom: 12,
-  },
-  actionCardContent: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  actionIcon: {
-    marginBottom: 12,
-  },
-  actionTitle: {
-    textAlign: 'center',
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  actionSubtitle: {
-    textAlign: 'center',
-    color: '#666',
-    marginBottom: 16,
-  },
-  actionButton: {
-    minWidth: 140,
-  },
-  primaryActionButton: {
-    backgroundColor: '#4caf50',
-  },
-  secondaryActionButton: {
-    borderColor: '#ff9800',
-  },
-  cardTitle: {
-    marginBottom: 12,
-    fontWeight: 'bold',
-    color: '#2196F3',
-  },
-  statsGrid: {
-    paddingTop: 8,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  statValue: {
-    fontWeight: 'bold',
-    color: '#2196F3',
-  },
-  fisherInfo: {
-    marginBottom: 8,
-  },
-  noInfoText: {
-    color: '#666',
-    marginBottom: 12,
-  },
-  editButton: {
+  placeText: {
+    color: 'rgba(242,237,228,0.8)',
+    fontSize: 13.5,
     marginTop: 8,
+    lineHeight: 19,
   },
-  addInfoButton: {
-    marginTop: 8,
+
+  body: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  primaryButton: {
-    marginBottom: 12,
-  },
-  secondaryButton: {
-    marginBottom: 8,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  recentEntry: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  recentEntryDetail: {
-    color: '#666',
+
+  sectionTitle: {
+    color: colors.ink,
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 14,
     marginTop: 4,
   },
-  logoutButton: {
-    marginTop: 24,
-    marginBottom: 32,
-    borderColor: '#d32f2f',
+
+  // Researcher panel
+  fisherPanel: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: 16,
+    marginBottom: 22,
   },
-  // Fisher Card Styles
-  fisherCard: {
-    backgroundColor: '#fff',
-    borderLeftWidth: 4,
-    borderLeftColor: '#4caf50',
-  },
-  selectedFisherInfo: {
+  fisherRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: '#f1f8f4',
-    borderRadius: 8,
   },
-  selectedFisherDetails: {
+  fisherAvatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(27,122,140,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  fisherText: {
     flex: 1,
-    marginLeft: 12,
   },
-  selectedFisherName: {
-    fontWeight: 'bold',
-    color: '#2e7d32',
-    marginBottom: 4,
+  fisherEyebrow: {
+    color: colors.inkSoft,
+    fontSize: 12,
   },
-  fisherDetail: {
-    color: '#666',
+  fisherName: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+  fisherMeta: {
+    color: colors.inkSoft,
     fontSize: 13,
     marginTop: 2,
   },
   fisherActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    gap: 8,
+    justifyContent: 'flex-end',
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.hairline,
+    paddingTop: 6,
   },
-  changeFisherButton: {
-    flex: 1,
-    borderColor: '#2196F3',
-  },
-  noFisherSelected: {
+  noFisher: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
   },
   noFisherText: {
-    marginTop: 12,
-    color: '#666',
-    fontWeight: 'bold',
+    flex: 1,
+    marginLeft: 12,
   },
-  noFisherSubtext: {
+  noFisherTitle: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  noFisherSub: {
+    color: colors.inkSoft,
+    fontSize: 13,
+    marginTop: 2,
+  },
+
+  // Stat tiles — number-forward
+  statGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 26,
+  },
+  statTile: {
+    width: '48%',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  statValue: {
+    fontSize: 26,
+    fontWeight: '800',
+  },
+  statValueBig: {
+    fontSize: 36,
+  },
+  statUnit: {
+    color: colors.inkSoft,
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 5,
+  },
+  statLabel: {
+    color: colors.inkSoft,
+    fontSize: 13,
+    marginTop: 6,
+  },
+
+  // Primary action
+  primaryAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.riverDeep,
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    marginBottom: 28,
+  },
+  primaryActionPressed: {
+    backgroundColor: '#0A3B46',
+  },
+  primaryIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(232,163,61,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  primaryTextWrap: {
+    flex: 1,
+  },
+  primaryTitle: {
+    color: colors.surface,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  primarySub: {
+    color: 'rgba(242,237,228,0.72)',
+    fontSize: 13,
+    marginTop: 2,
+  },
+
+  // Timeline
+  timeline: {
+    marginBottom: 12,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+  },
+  timelineMarker: {
+    width: 20,
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: colors.gold,
+    borderWidth: 2,
+    borderColor: colors.sand,
     marginTop: 4,
-    color: '#999',
-    textAlign: 'center',
   },
-  selectFisherButton: {
-    marginTop: 16,
-    backgroundColor: '#4caf50',
+  timelineLine: {
+    flex: 1,
+    width: 2,
+    backgroundColor: colors.hairline,
+    marginTop: 2,
+  },
+  timelineContent: {
+    flex: 1,
+    marginLeft: 12,
+    paddingBottom: 18,
+  },
+  timelineDate: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  timelineDetail: {
+    color: colors.inkSoft,
+    fontSize: 13.5,
+    marginTop: 3,
+  },
+
+  emptyNote: {
+    color: colors.inkSoft,
+    fontSize: 14,
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
+
+  logout: {
+    marginTop: 8,
+    marginBottom: 16,
+    borderColor: colors.clay,
+    borderWidth: 1.5,
+    borderRadius: 12,
+  },
+  logoutContent: {
+    paddingVertical: 6,
   },
 });
